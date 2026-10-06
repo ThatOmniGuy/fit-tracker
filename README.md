@@ -34,8 +34,8 @@ Data is saved in that browser, for that file location. If you move the file or s
 ### One-time setup (about 10 minutes)
 
 1. Sign in to GitHub (a free personal account is fine) and create a **new public repository**, e.g. `fit-tracker`. Free accounts need the repo to be public for Pages. That's fine, because no personal details are in the files.
-2. Upload this project: on the repo page choose **Add file → Upload files** and drag in the `docs` folder, `tests`, `tools` and `README.md`. Don't include the original brief or any backup `.json` files. Commit.
-   - Or with git: `git init`, `git add .`, `git commit -m "Fit Tracker"`, then push to the new repo.
+2. Upload **only** the `docs` folder and `README.md`: on the repo page choose **Add file → Upload files** and drag them in. Keep `tests`, `tools` and `.claude` on the PC, because the tests contain example numbers you may not want public. Never upload backup `.json` files. Commit.
+   - To update later, open the `docs` folder on GitHub, choose **Add file → Upload files**, drag in the changed files and commit.
 3. In the repo go to **Settings → Pages**. Under *Build and deployment* pick **Deploy from a branch**, branch **main**, folder **/docs**, then Save.
 4. Wait a minute or two. The page shows your address, like `https://<your-username>.github.io/fit-tracker/`.
 5. On the iPhone, open that address in **Safari**. Other browsers can't add proper Home Screen apps on older iOS versions.
