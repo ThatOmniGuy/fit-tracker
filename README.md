@@ -120,6 +120,20 @@ The app is built to keep going after the first goal. A **phase** is one goal plu
 - **What's new:** the Progress card and pace measure from the new phase's start. Each phase has its own done-ticks and day edits, so redoing a level doesn't show as already done.
 - **Maintain mode:** the Progress card shows your trend against the target. It reads "Holding steady" within ±1 kg, and "Above range" or "Below range" outside that. The chart shades the ±1 kg band. Pace and deadline numbers are hidden because they don't apply.
 
+### Extra game sessions
+
+On any day that isn't a planned VR / game day, Today has a **+ Add a VR / game session** button under the session card. It uses the same game timers and log sheet. The session is saved as *extra* activity: it shows on the calendar and in the day's log, but it doesn't tick off the planned workout or count toward the streak.
+
+### Gender, BMI and waist
+
+- **Gender** is optional ("Prefer not to say" by default), set at first run or in Settings → Goal. It sets the starting dumbbell weight (4 kg female, 8 kg male, 6 kg unspecified; only applied if you haven't logged any dumbbell weights yet) and the waist health ranges. The workouts are the same for everyone.
+- **BMI** on the Weight tab shows your category (underweight, healthy, overweight, obese classes I–III) and the healthy weight range for your height. It uses trend weight and needs your height in Settings.
+- **Waist** shows the WHO risk ranges for your gender: men under 94 cm lower risk, 94–102 increased, over 102 high; women under 80, 80–88, over 88.
+
+### Sharing the app
+
+Anyone can use the same web address. Each phone keeps its own data, so a partner's logs never mix with yours. They just do their own first-run setup.
+
 ### Adding games and activities
 
 On any VR / game day, tap **+ Add a game or activity** (just above *Done: log it*). Give it a name, an optional type, and pick Light, Moderate or Hard; that sets the energy estimate. It appears straight away with its own timer, on every future game day too. You can fine-tune or remove added activities in **Settings → VR / games and activities**. Removing one hides it from the list, but past logs keep its name.

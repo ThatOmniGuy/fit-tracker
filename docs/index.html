@@ -16,7 +16,7 @@
   --bg:#101622; --bg2:#172033; --card:#1c2740; --card2:#243150; --line:#2c3a5a;
   --text:#eef2fa; --muted:#a3afc6; --blue:#2f80ed; --blue2:#1f6ad6; --green:#34c77b;
   --orange:#ff9540; --purple:#a77bf3; --red:#ef5b5b; --yellow:#f2c94c;
-  --radius:16px; --tap:48px;
+  --radius:16px; --tap:48px; --fig-near:#5aa9ff; --fig-far:#7d8aa6;
   --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
   --safe-l:env(safe-area-inset-left,0px); --safe-r:env(safe-area-inset-right,0px);
   color-scheme:dark;
@@ -25,13 +25,13 @@
   :root:not([data-theme="dark"]){
     --bg:#f3f5fa; --bg2:#e8ecf4; --card:#ffffff; --card2:#eef2f9; --line:#d5dceb;
     --text:#131a2a; --muted:#56627a; --blue:#1f6ad6; --blue2:#1857b3; --green:#1d9a5a;
-    --orange:#d9661a; --purple:#7b4fd1; --red:#c93a3a; --yellow:#a77a00; color-scheme:light;
+    --orange:#d9661a; --purple:#7b4fd1; --red:#c93a3a; --yellow:#a77a00; color-scheme:light; --fig-near:#1f6ad6; --fig-far:#9aa6bd;
   }
 }
 :root[data-theme="light"]{
   --bg:#f3f5fa; --bg2:#e8ecf4; --card:#ffffff; --card2:#eef2f9; --line:#d5dceb;
   --text:#131a2a; --muted:#56627a; --blue:#1f6ad6; --blue2:#1857b3; --green:#1d9a5a;
-  --orange:#d9661a; --purple:#7b4fd1; --red:#c93a3a; --yellow:#a77a00; color-scheme:light;
+  --orange:#d9661a; --purple:#7b4fd1; --red:#c93a3a; --yellow:#a77a00; color-scheme:light; --fig-near:#1f6ad6; --fig-far:#9aa6bd;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--text)}
@@ -203,6 +203,8 @@ input[type=range]{width:100%;margin:0;min-height:var(--tap);accent-color:var(--b
 .cal .dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center}
 .cal .dot{width:7px;height:7px;border-radius:50%}
 .legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted)}
+.bmi-bar{position:relative;height:10px;border-radius:5px;background:linear-gradient(90deg,var(--orange) 0 14%,var(--green) 14% 40%,var(--orange) 40% 60%,var(--red) 60% 100%)}
+.bmi-bar i{position:absolute;top:-4px;width:4px;height:18px;margin-left:-2px;border-radius:2px;background:var(--text)}
 .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}
 .d-done{background:var(--green)} .d-vr{background:var(--purple)} .d-rest{background:var(--muted)}
 .d-diet{background:var(--yellow)} .d-wt{background:var(--blue)} .d-miss{background:var(--red)}
@@ -216,12 +218,22 @@ input[type=range]{width:100%;margin:0;min-height:var(--tap);accent-color:var(--b
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--safe-b) + 80px);z-index:90;
   background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;max-width:90vw}
 .footer-note{font-size:12px;color:var(--muted);text-align:center;margin-top:24px}
-.figsvg .body{stroke:currentColor;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.figsvg polyline{stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.figsvg .torso{stroke:currentColor} .figsvg .near{stroke:var(--fig-near)} .figsvg .far{stroke:var(--fig-far)}
+.figsvg .ghost{opacity:.14} .figsvg .ghost .near,.figsvg .ghost .far{stroke:currentColor}
+.frames{display:flex;align-items:center;gap:4px;margin-top:10px;overflow-x:auto}
+.frames figure{margin:0;flex:1 0 72px;text-align:center}
+.frames .fr{background:var(--bg2);border-radius:10px}
+.frames figcaption{font-size:11px;color:var(--muted);line-height:1.2;margin-top:2px}
+.frames figcaption b{color:var(--text)}
+.frames .arrow{color:var(--muted);font-weight:800}
+.pcue{text-align:center;color:var(--muted);font-size:14px;line-height:1.35;margin:4px 0 2px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.player.rest .pcue{color:#dbe6ff}
 .figsvg .head{fill:currentColor}
 .figsvg .ground{stroke:var(--line);stroke-width:2}
 .figsvg .db{stroke:var(--orange);stroke-width:6;stroke-linecap:round}
 .figsvg{color:var(--text)}
-.hero .figsvg{color:#fff}
+.hero .figsvg,.player.rest .figsvg{color:#fff;--fig-near:#ffd166;--fig-far:rgba(255,255,255,.55)}
 .player.rest .figsvg{color:#fff}
 @media (prefers-reduced-motion:reduce){ .figsvg animate{display:none} }
 </style>
@@ -253,7 +265,7 @@ const side = (base, s, more) => Object.assign({ base, side: s, mirror: s === 'ri
 E('side_step_jacks', 'Side step jacks', 'time', 'cardio', 'shoulders,calves,glutes', 1, 5, [30, 30], ['front', 'stepout'], 'Step one foot out to the side as your arms rise, then switch. Light and rhythmic, no jumping.', S);
 E('standing_bicycle_crunch', 'Standing bicycle crunches', 'reps', 'core', 'obliques,abs,hip flexors', 1, 4.5, [20, 24], ['handshead', 'kneetwist'], 'Hands behind your head. Lift one knee and bring the opposite elbow down to meet it. Alternate sides.', S);
 E('jumping_jacks', 'Jumping jacks', 'time', 'cardio', 'full body,calves,shoulders', 1, 8, [30, 30], ['front', 'jack'], 'Jump your feet out as your arms go overhead, then back in. Land softly on the balls of your feet.', { seeded: true, hi: true, alt: 'side_step_jacks' });
-E('inchworms', 'Inchworms', 'time', 'full', 'hamstrings,shoulders,core', 1, 4, [30, 30], ['fold', 'highplank'], 'Fold forward, walk your hands out to a plank, then walk them back and stand up. Bend your knees as much as you need.', S);
+E('inchworms', 'Inchworms', 'time', 'full', 'hamstrings,shoulders,core', 1, 4, [30, 30], ['stand', 'fold', 'walkout', 'highplank'], 'Stand tall. Fold forward and put your hands on the floor (bend your knees as much as you need). Walk your hands forward until you\'re in a plank. Then walk your hands back to your feet and stand up. Repeat.', { seeded: true, steps: ['Stand', 'Hands to floor', 'Walk hands out', 'Plank, then walk back'] });
 E('dead_bug', 'Dead bug', 'reps', 'core', 'abs,deep core,hip flexors', 1, 3.8, [16, 20], ['deadbug', 'deadbug2'], 'On your back, arms up, knees bent at 90°. Slowly lower the opposite arm and leg while your lower back stays pressed down.', S);
 E('heel_touch', 'Heel touch', 'reps', 'core', 'obliques,abs', 1, 3.8, [16, 24], ['heeltouch', 'heeltouch2'], 'On your back, knees bent, shoulders slightly lifted. Reach side to side to tap each heel.', S);
 E('plank', 'Plank', 'time', 'core', 'abs,shoulders,glutes', 1, 4, [30, 60], ['plank', 'plank_b'], 'Forearms under shoulders, body in one straight line from head to heels. Squeeze your glutes and keep breathing.', S);
@@ -278,7 +290,7 @@ E('lumbar_twist_r', 'Spine lumbar twist stretch right', 'time', 'stretch', 'lowe
 E('skipping', 'Skipping without rope', 'time', 'cardio', 'calves,shoulders,full body', 1, 8.5, [30, 30], ['skip', 'skip_b'], 'Hop lightly from foot to foot as if turning a rope. Stay on the balls of your feet.', { seeded: true, hi: true, alt: 'march' });
 E('reclined_oblique_twist', 'Reclined oblique twist', 'reps', 'core', 'obliques,abs', 1, 3.8, [10, 16], ['recline', 'recline_b'], 'Sit leaning back at about 45°, arms in front. Rotate to one side, back to centre, then the other.', S);
 E('mountain_climber', 'Mountain climber', 'reps', 'cardio', 'abs,shoulders,hip flexors', 2, 8, [22, 30], ['climb', 'climb_b'], 'From a high plank, drive your knees toward your chest one at a time. Keep your hips low.', { seeded: true, hi: true, alt: 'slow_mountain_climber' });
-E('slow_mountain_climber', 'Slow mountain climber', 'time', 'core', 'abs,shoulders', 1, 5, [30, 30], ['climb', 'climb_b'], 'High plank. Bring one knee to your chest slowly, return, switch. Control over speed.', S);
+E('slow_mountain_climber', 'Slow mountain climber', 'time', 'core', 'abs,shoulders', 1, 5, [30, 30], ['climb', 'climb_b'], 'High plank. Bring one knee to your chest slowly, return, switch. Control over speed.', { seeded: true, slow: true });
 E('oblique_crunch_reach', 'Oblique crunch reach', 'reps', 'core', 'obliques', 1, 3.8, [10, 16], ['crunch', 'heeltouch2'], 'On your back, knees bent. Crunch up and reach one hand past the outside of the opposite knee.', S);
 E('high_stepping', 'High stepping', 'time', 'cardio', 'glutes,quadriceps,hamstrings,calves', 1, 7, [20, 30], ['stand', 'highknee'], 'Run in place pulling your knees high; keep your upper body upright.', { seeded: true, hi: true, alt: 'march' });
 E('sit_up', 'Sit-ups', 'reps', 'core', 'abs,hip flexors', 2, 4.5, [10, 20], ['crunch', 'situp'], 'On your back, knees bent, feet flat. Curl all the way up to sitting, then lower with control.', S);
@@ -301,7 +313,7 @@ E('arm_circles', 'Arm circles', 'time', 'mobility', 'shoulders', 1, 2.8, [30, 30
 E('squat', 'Squats', 'reps', 'legs', 'quadriceps,glutes,hamstrings', 1, 5, [10, 20], ['stand', 'squat'], 'Feet shoulder-width apart. Sit back and down as if into a chair, chest up, then stand tall.');
 E('sumo_squat', 'Sumo squats', 'reps', 'legs', 'inner thighs,glutes,quadriceps', 1, 5, [10, 20], ['front', 'sumo'], 'Wide stance, toes turned out. Lower straight down with knees tracking over your toes, then stand.');
 E('reverse_lunge', 'Reverse lunges', 'reps', 'legs', 'glutes,quadriceps,hamstrings', 2, 5, [10, 16], ['hipsstand', 'lunge'], 'Step one foot back and lower until both knees are bent. Push back up. Alternate legs.');
-E('wall_sit', 'Wall sit', 'time', 'legs', 'quadriceps,glutes', 2, 4, [20, 45], ['wallsit', 'wallsit_b'], 'Back flat against a wall, slide down until your knees are near 90°. Hold. Higher is easier.');
+E('wall_sit', 'Wall sit', 'time', 'legs', 'quadriceps,glutes', 2, 4, [20, 45], ['wallstand', 'wallsit'], 'Back flat against a wall, slide down until your knees are near 90°. Hold. Higher is easier.', { prop: 'wall', steps: ['Back to the wall', 'Slide down and hold'] });
 E('calf_raise', 'Calf raises', 'reps', 'legs', 'calves', 1, 3, [16, 24], ['stand', 'tiptoe'], 'Rise onto the balls of your feet, pause, lower slowly. Hold a wall for balance if you like.');
 E('glute_bridge_march', 'Glute bridge march', 'reps', 'legs', 'glutes,hamstrings,core', 1, 4, [12, 20], ['bridge_up', 'bridge_march'], 'Hold a bridge, then lift one foot a few centimetres, set it down, switch. Keep your hips level.');
 E('single_leg_bridge_l', 'Single leg bridge left', 'reps', 'legs', 'glutes,hamstrings', 2, 4, [8, 12], ['bridge', 'slbridge'], 'On your back, left foot planted, right leg straight. Push through your left heel to lift your hips.', side('Single leg bridge', 'left'));
@@ -321,7 +333,7 @@ E('hollow_hold', 'Hollow hold', 'time', 'core', 'abs,deep core', 3, 4, [15, 30],
 E('flutter_kicks', 'Flutter kicks', 'time', 'core', 'lower abs,hip flexors', 2, 4, [20, 30], ['flutter', 'flutter_b'], 'On your back, legs low and straight. Kick them up and down in small, quick movements.');
 E('reverse_crunch', 'Reverse crunch', 'reps', 'core', 'lower abs', 1, 3.8, [10, 16], ['tabletop', 'revcrunch'], 'On your back, knees bent in the air. Curl your hips off the floor, bringing your knees to your chest. Lower slowly.');
 E('plank_jacks', 'Plank jacks', 'time', 'core', 'abs,shoulders,calves', 2, 7, [20, 30], ['highplank', 'plankjack'], 'High plank. Jump your feet wide and back together, hips steady.', { hi: true, alt: 'shoulder_taps' });
-E('squat_thrust', 'Squat thrusts', 'reps', 'full', 'full body,core,legs', 3, 8, [6, 10], ['squatdown', 'highplank'], 'Squat, hands to the floor, jump or step back to a plank, return and stand.', { hi: true, alt: 'squat' });
+E('squat_thrust', 'Squat thrusts', 'reps', 'full', 'full body,core,legs', 3, 8, [6, 10], ['stand', 'squatdown', 'highplank'], 'Squat down and put your hands on the floor, jump or step back to a plank, bring your feet back in and stand.', { hi: true, alt: 'squat', steps: ['Stand', 'Squat, hands down', 'Step or jump back'] });
 E('v_ups', 'V-ups', 'reps', 'core', 'abs,hip flexors', 3, 4.5, [6, 12], ['hollow', 'vup'], 'From a hollow position, lift your arms and legs to meet above your hips. Bend your knees to make it easier.');
 // ---- Added: mobility and stretches ----
 E('childs_pose', 'Child\'s pose', 'time', 'stretch', 'lower back,shoulders,hips', 1, 2.3, [30, 30], ['childs', 'childs_b'], 'Kneel, sit back toward your heels and reach your arms forward. Breathe slowly.');
@@ -382,7 +394,9 @@ const POSE_DEF = {
   tiptoe: ['stand', { h: [60, 12], n: [60, 23], p: [60, 51], e1: [61, 37], w1: [62, 50], e2: [59, 37], w2: [58, 50], k1: [61, 69], f1: [61, 87], k2: [59, 69], f2: [61, 87] }],
   wallsit: { h: [42, 30], n: [42, 41], p: [42, 66], e1: [48, 54], w1: [58, 62], e2: [46, 54], w2: [56, 62], k1: [66, 66], f1: [66, 91], k2: [64, 66], f2: [64, 91] },
   wallsit_b: ['wallsit', { h: [42, 31] }],
-  fold: { h: [70, 82], n: [66, 72], p: [56, 52], e1: [68, 82], w1: [70, 91], e2: [66, 82], w2: [68, 91], k1: [57, 72], f1: [56, 91], k2: [55, 72], f2: [56, 91] },
+  wallstand: { h: [43, 16], n: [42, 27], p: [42, 55], e1: [44, 41], w1: [46, 54], e2: [42, 41], w2: [44, 54], k1: [45, 73], f1: [48, 91], k2: [44, 73], f2: [47, 91] },
+  fold: { h: [78, 84], n: [73, 77], p: [54, 56], e1: [75, 84], w1: [77, 91], e2: [74, 84], w2: [76, 91], k1: [61, 73], f1: [56, 91], k2: [60, 73], f2: [55, 91] },
+  walkout: { h: [88, 71], n: [80, 72], p: [52, 62], e1: [86, 82], w1: [92, 91], e2: [85, 82], w2: [91, 91], k1: [55, 77], f1: [56, 91], k2: [54, 77], f2: [55, 91] },
   squatdown: { h: [74, 56], n: [68, 62], p: [50, 72], e1: [72, 78], w1: [74, 91], e2: [70, 78], w2: [72, 91], k1: [70, 70], f1: [60, 91], k2: [68, 70], f2: [58, 91] },
   hinge: { h: [82, 33], n: [74, 38], p: [52, 54], e1: [74, 52], w1: [74, 65], e2: [72, 52], w2: [72, 65], k1: [58, 72], f1: [56, 91], k2: [56, 72], f2: [54, 91] },
   hinge_row: ['hinge', { e1: [64, 40], w1: [70, 51], e2: [62, 40], w2: [68, 51] }],
@@ -465,7 +479,8 @@ const POSE_DEF = {
   tplank: ['sideplank', { n: [38, 62], h: [30, 55], e1: [38, 76], w1: [38, 90], e2: [38, 46], w2: [38, 30] }],
 };
 // Animation speed per area (seconds per A-B-A loop).
-const ART_SPEED = { cardio: 1, full: 2.4, stretch: 4, mobility: 3, strength: 2.6, default: 2 };
+// Seconds per start→end→start loop (pauses included). Slower than real speed on purpose, so the shape of the move is readable.
+const ART_SPEED = { cardio: 1.8, full: 3.2, stretch: 4.5, mobility: 3.5, strength: 3.2, default: 2.8 };
 
 /* ---- Seeded days from the original app (do not change) ---- */
 const R = (id, reps) => ({ id, reps });
@@ -598,34 +613,62 @@ function resolvePose(name, seen) {
   JOINTS.forEach((j) => { if (!out[j]) throw new Error('Pose ' + name + ' missing ' + j); });
   return (POSES[name] = out);
 }
+// Limbs: the near-side arm and leg get their own colour so left/right never blur together.
+const LIMBS = [['far', ['n', 'e2', 'w2']], ['far', ['p', 'k2', 'f2']], ['torso', ['n', 'p']], ['near', ['p', 'k1', 'f1']], ['near', ['n', 'e1', 'w1']]];
+const ptsOf = (P, list) => list.map((j) => P[j].join(',')).join(' ');
+function staticFigure(P, ex, cls) {
+  let b = LIMBS.map(([c, list]) => `<polyline class="${c}" points="${ptsOf(P, list)}"/>`).join('');
+  b += `<circle class="head" r="6.5" cx="${P.h[0]}" cy="${P.h[1]}"/>`;
+  if (ex.equip === 'db') b += ['w1', 'w2'].map((w) => `<line class="db" x1="${P[w][0] - 4}" y1="${P[w][1]}" x2="${P[w][0] + 4}" y2="${P[w][1]}"/>`).join('');
+  return `<g class="${cls || ''}">${b}</g>`;
+}
+function svgWrap(ex, inner, label) {
+  const mir = ex.mirror ? ' transform="translate(120,0) scale(-1,1)"' : '';
+  const wall = ex.prop === 'wall' ? '<line class="ground" x1="37" y1="18" x2="37" y2="92.5"/>' : '';
+  return `<svg class="figsvg" viewBox="0 0 120 100" role="img" aria-label="${esc(label)}"><line class="ground" x1="4" y1="92.5" x2="116" y2="92.5"/><g${mir}>${wall}${inner}</g></svg>`;
+}
+// Animated figure: moves through each pose and back, pausing at every position.
+// A faint outline of the start and end positions stays visible behind it.
+// Static (animate:false) shows the final position, which is the most recognisable for thumbnails.
 function figureSVG(exId, opts) {
   opts = opts || {};
   const ex = LIBRARY[exId];
   if (!ex || !ex.pose) return null;
-  let A = resolvePose(ex.pose[0]), B = resolvePose(ex.pose[1] || ex.pose[0]);
-  if (!A || !B) return null;
-  if (opts.animate === false) A = B; // static thumbnails show the end position, which reads better
-  const mir = ex.mirror ? ' transform="translate(120,0) scale(-1,1)"' : '';
-  const dur = (ART_SPEED[ex.area] || ART_SPEED.default) * (ex.id.startsWith('slow') ? 1.8 : 1);
-  const pts = (P, list) => list.map((j) => P[j].join(',')).join(' ');
-  const limbs = [['far', ['n', 'e2', 'w2']], ['far', ['p', 'k2', 'f2']], ['', ['n', 'p']], ['', ['p', 'k1', 'f1']], ['', ['n', 'e1', 'w1']]];
-  const anim = opts.animate !== false;
-  const a = (attr, va, vb) => anim && va !== vb
-    ? `<animate attributeName="${attr}" values="${va};${vb};${va}" dur="${dur}s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines=".45 0 .55 1;.45 0 .55 1"/>` : '';
-  let body = '';
-  limbs.forEach(([cls, list]) => {
-    const pa = pts(A, list), pb = pts(B, list);
-    body += `<polyline class="body"${cls ? ' opacity=".5"' : ''} points="${pa}">${a('points', pa, pb)}</polyline>`;
-  });
-  body += `<circle class="head" r="6.5" cx="${A.h[0]}" cy="${A.h[1]}">${a('cx', A.h[0], B.h[0])}${a('cy', A.h[1], B.h[1])}</circle>`;
+  const P = ex.pose.map((n) => resolvePose(n));
+  if (!P.length || P.some((p) => !p)) return null;
+  const label = ex.name + ' illustration';
+  if (opts.animate === false || P.length < 2) return svgWrap(ex, staticFigure(P[P.length - 1], ex), label);
+  const frames = P.concat(P.slice(0, -1).reverse());
+  const seg = frames.length - 1;
+  const dur = ((ART_SPEED[ex.area] || ART_SPEED.default) * seg / 2) * (ex.slow ? 1.6 : 1);
+  const kt = [0], idx = [0], spl = [];
+  for (let i = 0; i < seg; i++) {
+    const t0 = i / seg, t1 = (i + 1) / seg;
+    kt.push(+(t0 + (t1 - t0) * 0.35).toFixed(4), i === seg - 1 ? 1 : +t1.toFixed(4)); idx.push(i, i + 1);
+    spl.push('0 0 1 1', '.45 0 .55 1');
+  }
+  const anim = (attr, get) => {
+    const vals = idx.map((i) => get(frames[i]));
+    if (vals.every((v) => v === vals[0])) return '';
+    return `<animate attributeName="${attr}" values="${vals.join(';')}" dur="${dur.toFixed(2)}s" repeatCount="indefinite" calcMode="spline" keyTimes="${kt.join(';')}" keySplines="${spl.join(';')}"/>`;
+  };
+  let body = opts.ghost === false ? '' : staticFigure(P[0], ex, 'ghost') + staticFigure(P[P.length - 1], ex, 'ghost');
+  LIMBS.forEach(([c, list]) => { body += `<polyline class="${c}" points="${ptsOf(P[0], list)}">${anim('points', (F) => ptsOf(F, list))}</polyline>`; });
+  body += `<circle class="head" r="6.5" cx="${P[0].h[0]}" cy="${P[0].h[1]}">${anim('cx', (F) => F.h[0])}${anim('cy', (F) => F.h[1])}</circle>`;
   if (ex.equip === 'db') {
     ['w1', 'w2'].forEach((w) => {
-      const [x1, y1] = A[w], [x2, y2] = B[w];
-      body += `<line class="db" x1="${x1 - 4}" y1="${y1}" x2="${x1 + 4}" y2="${y1}">${a('x1', x1 - 4, x2 - 4)}${a('x2', x1 + 4, x2 + 4)}${a('y1', y1, y2)}${a('y2', y1, y2)}</line>`;
+      body += `<line class="db" x1="${P[0][w][0] - 4}" y1="${P[0][w][1]}" x2="${P[0][w][0] + 4}" y2="${P[0][w][1]}">${anim('x1', (F) => F[w][0] - 4)}${anim('x2', (F) => F[w][0] + 4)}${anim('y1', (F) => F[w][1])}${anim('y2', (F) => F[w][1])}</line>`;
     });
   }
-  const label = esc(ex.name) + ' illustration';
-  return `<svg class="figsvg" viewBox="0 0 120 100" role="img" aria-label="${label}"><line class="ground" x1="4" y1="92.5" x2="116" y2="92.5"/><g${mir}>${body}</g></svg>`;
+  return svgWrap(ex, body, label);
+}
+// Numbered still frames (1 → 2 → 3) so the order of the movement is unambiguous.
+function figureFrames(exId) {
+  const ex = LIBRARY[exId];
+  if (!ex || !ex.pose || ex.pose.length < 2) return '';
+  const P = ex.pose.map((n) => resolvePose(n));
+  const labels = ex.steps || P.map((_, i) => (i === 0 ? 'Start' : i === P.length - 1 ? (ex.mode === 'time' && ex.area === 'stretch' ? 'Hold' : 'End') : 'Then'));
+  return `<div class="frames">${P.map((p, i) => `${i ? '<span class="arrow" aria-hidden="true">→</span>' : ''}<figure><div class="fr">${svgWrap(ex, staticFigure(p, ex), `${ex.name} step ${i + 1}`)}</div><figcaption><b>${i + 1}</b> ${esc(labels[i] || '')}</figcaption></figure>`).join('')}</div>`;
 }
 
 /* ---------- Plan generation (pure) ---------- */
@@ -859,7 +902,7 @@ function beginPhase(data, o) {
   data.phases = (data.phases || []).concat([{ n, startDate: p.startDate, endDate: DateX.add(o.startDate, -1), startWeight: p.startWeight,
     goalWeight: p.goalWeight, goalDate: p.goalDate, mode: p.mode || 'lose', focus: p.focus || 'balanced', level: p.level || 1, t: Date.now() }]);
   data.profile = { startDate: o.startDate, startWeight: o.startWeight, goalWeight: o.goalWeight, goalDate: o.mode === 'maintain' ? null : o.goalDate || null,
-    heightCm: p.heightCm, mode: o.mode, focus: o.focus, level: clamp(o.level || 1, 1, CYCLES.length), phase: n + 1 };
+    heightCm: p.heightCm, sex: p.sex || 'unspecified', mode: o.mode, focus: o.focus, level: clamp(o.level || 1, 1, CYCLES.length), phase: n + 1 };
   data.schedule.anchors = data.schedule.anchors.filter((a) => a.date < o.startDate);
   data.schedule.pauses = data.schedule.pauses.filter((d) => d < o.startDate);
   data.meta.milestone = 0;
@@ -914,7 +957,7 @@ function defaultSettings() {
 }
 function defaultData() {
   return { schema: APP.schema, updatedAt: 0,
-    profile: { startDate: null, startWeight: null, goalWeight: null, goalDate: null, heightCm: null, mode: 'lose', focus: 'balanced', level: 1, phase: 1 },
+    profile: { startDate: null, startWeight: null, goalWeight: null, goalDate: null, heightCm: null, sex: 'unspecified', mode: 'lose', focus: 'balanced', level: 1, phase: 1 },
     phases: [], customGames: [],
     settings: defaultSettings(), days: {}, workouts: [], schedule: { anchors: [], pauses: [], dismissed: [] },
     planEdits: {}, loads: {}, vrActive: null, meta: { setupDone: false, phasePromptSnooze: null, lastBackup: null, milestone: 0, createdAt: null } };
@@ -953,7 +996,7 @@ function validateData(raw) {
   const p = d.profile || {};
   out.profile = { startDate: DateX.valid(p.startDate) ? p.startDate : null, startWeight: num(p.startWeight, 30, 400),
     goalWeight: num(p.goalWeight, 30, 400), goalDate: DateX.valid(p.goalDate) ? p.goalDate : null, heightCm: num(p.heightCm, 100, 250),
-    mode: PHASE_MODES[p.mode] ? p.mode : 'lose', focus: FOCUSES[p.focus] ? p.focus : 'balanced',
+    sex: SEXES[p.sex] ? p.sex : 'unspecified', mode: PHASE_MODES[p.mode] ? p.mode : 'lose', focus: FOCUSES[p.focus] ? p.focus : 'balanced',
     level: num(p.level, 1, CYCLES.length) || 1, phase: num(p.phase, 1, 999) || 1 };
   out.phases = (Array.isArray(d.phases) ? d.phases : []).filter((x) => x && DateX.valid(x.startDate) && num(x.n, 1, 999) != null).map((x) => ({
     n: x.n, startDate: x.startDate, endDate: DateX.valid(x.endDate) ? x.endDate : null, startWeight: num(x.startWeight, 30, 400),
@@ -1025,11 +1068,14 @@ function mergeData(local, incoming) {
 /* ---------- Workouts, streaks, missed days ---------- */
 const liveWorkouts = (data) => data.workouts.filter((w) => !w.deleted);
 function workoutsOn(date, data) { return liveWorkouts(data).filter((w) => w.date === date); }
+// Planned training only: extra VR / game sessions logged on top of the plan don't complete a plan day.
+function trainingOn(date, data) { return workoutsOn(date, data).filter((w) => !w.extra); }
+function extrasOn(date, data) { return workoutsOn(date, data).filter((w) => w.extra); }
 function isPlanKeyDone(key, data) { return liveWorkouts(data).some((w) => w.planKey === key); }
 function dayDone(date, data) {
   const s = sessionOn(date, data);
   if (s.session && isPlanKeyDone(s.session.key, data)) return true;
-  return workoutsOn(date, data).length > 0;
+  return trainingOn(date, data).length > 0;
 }
 function workoutStreak(data, today) {
   let n = 0;
@@ -1037,7 +1083,7 @@ function workoutStreak(data, today) {
   if (!start) return 0;
   for (let d = today, i = 0; d >= start && i < 400; d = DateX.add(d, -1), i++) {
     const s = sessionOn(d, data);
-    const done = workoutsOn(d, data).length > 0 || (s.session && isPlanKeyDone(s.session.key, data));
+    const done = trainingOn(d, data).length > 0 || (s.session && isPlanKeyDone(s.session.key, data));
     if (done) { n++; continue; }
     if (s.paused || !s.session || !isTraining(s.session)) continue; // rest and moved days don't break it
     if (d === today) continue; // today isn't over yet
@@ -1059,7 +1105,7 @@ function findMissed(data, today) {
   for (let i = 1; i <= 7; i++) {
     const d = DateX.add(today, -i);
     if (d < start) break;
-    if (workoutsOn(d, data).length) break;
+    if (trainingOn(d, data).length) break;
     const s = sessionOn(d, data);
     if (s.session && isPlanKeyDone(s.session.key, data)) break;
     if (s.session && isTraining(s.session)) {
@@ -1145,6 +1191,28 @@ function paceStatus(pr) {
   if (pr.actual <= 0) return { key: 'behind', label: 'Behind', line: 'The trend is flat or rising. Look at the last two weeks of diet days. Small daily gaps add up.' };
   return { key: 'behind', label: 'Behind', line: `Losing ${pr.actual.toFixed(1)} kg/week against ${pr.required.toFixed(1)} needed. Still progress. A slightly later finish is fine.` };
 }
+/* ---------- Body measures ---------- */
+// Optional; used for the waist health guide and the starting dumbbell weight. Exercises are the same for everyone.
+const SEXES = { unspecified: 'Prefer not to say', female: 'Female', male: 'Male' };
+const DUMBBELL_START = { unspecified: 6, female: 4, male: 8 };
+// Adult BMI categories (WHO).
+function bmiInfo(kg, cm) {
+  if (!kg || !cm) return null;
+  const m2 = Math.pow(cm / 100, 2), bmi = kg / m2;
+  const cat = bmi < 18.5 ? { key: 'under', label: 'Underweight' } : bmi < 25 ? { key: 'healthy', label: 'Healthy weight' }
+    : bmi < 30 ? { key: 'over', label: 'Overweight' } : bmi < 35 ? { key: 'ob1', label: 'Obese (class I)' }
+    : bmi < 40 ? { key: 'ob2', label: 'Obese (class II)' } : { key: 'ob3', label: 'Obese (class III)' };
+  return Object.assign({ bmi, healthyLo: 18.5 * m2, healthyHi: 24.9 * m2 }, cat);
+}
+// Waist-circumference risk thresholds (WHO), which differ by sex.
+const WAIST_RISK = { male: [94, 102], female: [80, 88] };
+function waistRisk(cm, sex) {
+  const t = WAIST_RISK[sex];
+  if (!t || !cm) return null;
+  const level = cm < t[0] ? { key: 'low', label: 'Lower risk' } : cm < t[1] ? { key: 'raised', label: 'Increased risk' } : { key: 'high', label: 'High risk' };
+  return Object.assign({ limits: t }, level);
+}
+
 // Maintenance: stay within ±1 kg of the target (trend weight, so daily swings don't count).
 function maintainStatus(pr) {
   if (pr.diff == null) return { key: 'unknown', label: 'Not enough data', line: 'Log your weight a few times a week to see how you\'re holding.' };
@@ -1171,7 +1239,7 @@ function weekReview(data, today) {
     daysSoFar++;
     const s = sessionOn(d, data);
     if (s.session && isTraining(s.session)) planned++;
-    if (workoutsOn(d, data).length) done++;
+    if (trainingOn(d, data).length) done++;
     if (data.days[d] && data.days[d].diet) diet++;
   }
   const series = weightSeries(data), ma = movingAverage(series);
@@ -1201,7 +1269,7 @@ const MESSAGES = {
 function pick(list, seed) { let h = 0; for (const ch of seed) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return list[h % list.length]; }
 function dailyMessage(data, today, hour) {
   const s = sessionOn(today, data), sess = s.session;
-  const done = workoutsOn(today, data).length > 0 || (sess && isPlanKeyDone(sess.key, data));
+  const done = trainingOn(today, data).length > 0 || (sess && isPlanKeyDone(sess.key, data));
   const diet = data.days[today] && data.days[today].diet;
   const rest = !sess || !isTraining(sess);
   let key;
@@ -1228,7 +1296,7 @@ if (typeof globalThis !== 'undefined') {
     defaultData, defaultSettings, migrate, validateData, mergeData, workoutStreak, dietStreak, findMissed, shiftPlan, skipToday,
     startNextCycle, weightSeries, movingAverage, recentSlope, progress, paceCaution, milestoneReached, weekReview, dailyMessage,
     spokenName, spokenTarget, doseLabel, uid, cycleCfg, restFor, stepSeconds, keyFor, parseKey, phaseSession, phaseInfo, planStart,
-    beginPhase, phasePromptDue, allGames, addCustomGame, isPlanKeyDone };
+    beginPhase, phasePromptDue, allGames, addCustomGame, isPlanKeyDone, bmiInfo, waistRisk, trainingOn, extrasOn };
 }
 </script>
 <!-- UI -->
@@ -1383,6 +1451,10 @@ function viewSetup() {
         <label class="field"><span>Goal date</span><input type="date" id="su-gd" value="${p.goalDate || ''}"></label>
         <label class="field"><span>Height (cm, optional)</span><input type="number" inputmode="decimal" id="su-h" value="${p.heightCm || ''}"></label>
       </div>
+      <div>
+        <label class="field"><span>Gender (optional)</span><select id="su-sex">${Object.entries(SEXES).map(([k, l]) => `<option value="${k}" ${p.sex === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+        <p class="tiny muted" style="margin-top:4px">Sets a sensible starting dumbbell weight and the waist-measurement health ranges. The workouts are the same for everyone.</p>
+      </div>
       <button class="btn primary block big" data-act="setupDone">Let's go</button>
     </div>
     <div class="card stack">
@@ -1405,6 +1477,10 @@ function viewToday() {
     ${banners()}
     <div class="card msg"><div class="tiny muted">${hour < 12 ? 'Good morning' : hour < 18 ? 'Afternoon check-in' : 'Evening wrap-up'}</div><div>${esc(msg.text)}</div></div>`;
   h += todaySessionCard(so);
+  if (!(so.session && so.session.type === 'vr')) {
+    const ex = extrasOn(t, D);
+    h += `<button class="btn block" data-act="extraOpen">+ Add a VR / game session${ex.length ? ` <span class="pill vr">${ex.reduce((a, w) => a + Math.round((w.durationSec || 0) / 60), 0)} min logged</span>` : ''}</button>`;
+  }
   // Missed days
   const miss = findMissed(D, t);
   if (miss) {
@@ -1433,7 +1509,7 @@ function backupDue() {
 function todaySessionCard(so) {
   if (so.before) return `<div class="card"><h2>Plan starts ${DateX.pretty(planStart(D), { weekday: 'long' })}</h2><p class="muted small">Have a look at the Plan tab in the meantime.</p></div>`;
   if (so.paused) return '<div class="card"><h2>Plan moved</h2><p class="muted small">Today was moved, so the plan picks up again tomorrow. Treat it as a rest day.</p></div>';
-  const s = so.session, done = isPlanKeyDone(s.key, D) || workoutsOn(so.date, D).length > 0;
+  const s = so.session, done = isPlanKeyDone(s.key, D) || trainingOn(so.date, D).length > 0;
   const head = `<div class="tiny muted">Cycle ${s.cycle} · ${s.day === 31 ? 'cycle break' : `Day ${s.day} of 30`} · ${esc(s.level)}</div>`;
   if (s.type === 'rest') {
     return `<div class="card row">${sessionThumb(s).replace('thumb', 'thumb" style="width:56px;height:56px')}<div class="grow">${head}<h2>${esc(s.title)}</h2>
@@ -1455,7 +1531,7 @@ function todaySessionCard(so) {
   </div>`;
 }
 function checkinCard(date, e) {
-  const done = workoutsOn(date, D).length > 0;
+  const done = trainingOn(date, D).length > 0;
   return `<div class="card stack"><h2>Check-in</h2>
     <div class="grid2">
       <label class="field"><span>Weight (kg, optional)</span><input type="number" inputmode="decimal" step="0.1" data-field="day.weight" data-date="${date}" value="${e.weight != null ? e.weight : ''}"></label>
@@ -1539,6 +1615,7 @@ function openSessionObj() {
   return resolveSession(s, D);
 }
 function viewSession() {
+  if (V.open.extra) return viewVR({ key: V.open.key, extra: true, targetMin: null, cycle: null, day: null });
   const s = openSessionObj();
   if (!s) { V.open = null; return viewToday(); }
   if (s.type === 'vr') return viewVR(s);
@@ -1591,7 +1668,7 @@ function sheetExercise() {
   const s = V.sheet, st = s.steps[s.i], ex = LIBRARY[st.id], tab = s.tab || 'video';
   let content;
   if (tab === 'video') {
-    content = `<div class="art" id="ex-art">${figureSVG(ex.id) || `<div class="textcue">${esc(ex.cue)}</div>`}</div>`;
+    content = `<div class="art" id="ex-art">${figureSVG(ex.id) || `<div class="textcue">${esc(ex.cue)}</div>`}</div>${figureFrames(ex.id)}<p class="small" style="margin-top:10px">${esc(ex.cue)}</p>`;
   } else if (tab === 'muscle') {
     content = `<div class="stack"><div class="small muted">Focus area</div><div class="row wrap">${ex.focus.map((f) => `<span class="chip">${esc(f)}</span>`).join('')}</div>
       <div class="small muted">Type: ${esc(ex.area)}${ex.hi ? ' · high impact' : ''}${ex.equip === 'db' ? ' · dumbbells' : ''} · tier ${ex.tier}${ex.seeded ? '' : ' · added exercise'}</div></div>`;
@@ -1687,23 +1764,30 @@ function vrState(key) {
 function vrMs(g) { return g.acc + (g.since ? Date.now() - g.since : 0); }
 function mmss(ms) { const s = Math.floor(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }
 function viewVR(s) {
-  const st = D.vrActive && D.vrActive.key === s.key ? D.vrActive : null, done = isPlanKeyDone(s.key, D);
-  const date = planDates()[s.key];
+  const st = D.vrActive && D.vrActive.key === s.key ? D.vrActive : null, done = !s.extra && isPlanKeyDone(s.key, D);
+  const date = s.extra ? today() : planDates()[s.key];
+  const logged = s.extra ? extrasOn(today(), D) : [];
+  const hero = s.extra
+    ? `<div><div class="tiny" style="opacity:.85">Today · on top of the plan</div><div class="dayno">EXTRA</div><div>VR / game session</div></div>`
+    : `<div><div class="tiny" style="opacity:.85">${date ? dayLabel(date) + ' · ' : ''}Cycle ${s.cycle}</div><div class="dayno">DAY ${s.day}</div><div>VR / game · your choice</div></div>`;
+  const aim = s.extra
+    ? `<div class="card stack"><h2>Bonus session</h2><p class="small">Any amount counts. It's logged as extra activity, so it doesn't replace or tick off today's planned workout.</p>
+        ${logged.length ? `<p class="small muted">Already logged today: ${logged.map((w) => `${Math.round((w.durationSec || 0) / 60)} min`).join(', ')}.</p>` : ''}</div>`
+    : `<div class="card stack"><h2>What to aim for</h2>
+      <p>About <b>${s.targetMin} minutes</b> in total, at an effort of around <b>6–7 out of 10</b>: breathing hard, but you could still talk in short sentences.</p>
+      <p class="small muted">Any game or mix of games below. Split the time however you like and start the timer for whichever one you're playing.</p></div>`;
   return `<main class="screen stack">
     <div class="hero vr"><div class="back"><button class="btn icon" data-act="closeSession" aria-label="Back">${ICON.back}</button></div>
-      <div class="fig" style="color:#fff">${ICON.vr}</div>
-      <div><div class="tiny" style="opacity:.85">${date ? dayLabel(date) + ' · ' : ''}Cycle ${s.cycle}</div><div class="dayno">DAY ${s.day}</div><div>VR / game · your choice</div></div></div>
+      <div class="fig" style="color:#fff">${ICON.vr}</div>${hero}</div>
     ${done ? '<div class="card"><span class="pill done">Done</span> Logged. Good session.</div>' : ''}
-    <div class="card stack"><h2>What to aim for</h2>
-      <p>About <b>${s.targetMin} minutes</b> in total, at an effort of around <b>6–7 out of 10</b>: breathing hard, but you could still talk in short sentences.</p>
-      <p class="small muted">Any game or mix of games below. Split the time however you like and start the timer for whichever one you're playing.</p></div>
+    ${aim}
     ${allGames(D).map((g) => { const gs = st && st.games[g.id] ? st.games[g.id] : { acc: 0, since: null }; return `<div class="card spread"><div><b>${esc(g.name)}</b><div class="tiny muted">${esc(g.kind)}</div>
       <div style="font-size:30px;font-weight:800;font-variant-numeric:tabular-nums" id="vr-t-${g.id}">${mmss(vrMs(gs))}</div></div>
       <div class="stack" style="min-width:110px"><button class="btn ${gs.since ? '' : 'primary'}" data-act="vrToggle" data-g="${g.id}">${gs.since ? 'Pause' : gs.acc ? 'Resume' : 'Start'}</button>
       ${gs.acc || gs.since ? `<button class="btn ghost small" data-act="vrReset" data-g="${g.id}">Reset</button>` : ''}</div></div>`; }).join('')}
     <button class="btn block" data-act="addGameOpen">+ Add a game or activity</button>
     <button class="btn good block big" data-act="vrDone">Done: log it</button>
-    <button class="btn ghost block" data-act="vrFallback">Do a bodyweight version instead</button>
+    ${s.extra ? '' : '<button class="btn ghost block" data-act="vrFallback">Do a bodyweight version instead</button>'}
     <p class="tiny muted">The timers keep counting if your phone locks or you close the app. Energy burned is a rough estimate from MET values in Settings.</p>
     ${footer()}</main>`;
 }
@@ -1872,6 +1956,7 @@ function renderPlayer() {
     <div class="pbar" style="margin-top:8px"><i style="width:${(P.done.size / n) * 100}%"></i></div>
     <div class="pfig">${figureSVG(st.id) || `<div class="textcue">${esc(ex.cue)}</div>`}</div>
     <div class="pname">${esc(resting ? (P.phase === 'ready' ? 'Get ready' : 'Rest') : ex.name)}</div>
+    <div class="pcue">${esc(ex.cue)}</div>
     ${target}${kg}${sub}
     ${P.paused ? `<div class="card" style="margin-top:8px;text-align:center">${P.autoPaused ? 'Paused while the app was in the background.' : 'Paused'}</div>` : ''}
     ${P.confirmEnd ? `<div class="card stack" style="margin-top:8px"><b>End the workout now?</b><div class="grid2"><button class="btn" data-act="pEndNo">Keep going</button><button class="btn danger" data-act="pEndYes">End</button></div></div>` : controls}
@@ -1900,7 +1985,8 @@ function viewWeight() {
   const list = pr.series.slice().reverse();
   const shown = V.showAllWeights ? list : list.slice(0, 10);
   const waist = Object.entries(D.days).filter(([, e]) => e.waist != null).map(([date, e]) => ({ date, v: e.waist })).sort((a, b) => (a.date < b.date ? -1 : 1));
-  const bmi = D.profile.heightCm && pr.trend ? pr.trend / Math.pow(D.profile.heightCm / 100, 2) : null;
+  const bmi = bmiInfo(pr.trend || (pr.latest && pr.latest.kg), D.profile.heightCm);
+  const wr = waist.length ? waistRisk(waist[waist.length - 1].v, D.profile.sex) : null;
   return `<main class="screen stack">
     <div class="topbar"><h1>Weight</h1>${flameHTML()}</div>
     ${milestoneCard(pr)}${snapshotCard(pr)}
@@ -1920,13 +2006,24 @@ function viewWeight() {
       <p class="small">${esc(pr.status.line)}</p>
       ${pr.projected ? `<p class="small">At this rate you'd reach ${fmtKg(pr.goal)} kg around <b>${DateX.pretty(pr.projected, { year: 'numeric' })}</b>${pr.goalDate ? ` (goal: ${DateX.pretty(pr.goalDate, { year: 'numeric' })})` : ''}.</p>` : ''}
       ${caution ? `<p class="small" style="color:var(--orange)">${esc(caution)}</p>` : ''}
-      ${bmi ? `<p class="tiny muted">BMI ${bmi.toFixed(1)} (a rough guide only)</p>` : ''}</div>
-    ${waist.length ? `<div class="card stack"><div class="spread"><h2>Waist</h2><b>${waist[waist.length - 1].v} cm</b></div>${sparkline(waist)}
+      </div>
+    ${bmiCard(bmi)}
+    ${waist.length ? `<div class="card stack"><div class="spread"><h2>Waist</h2><span><b>${waist[waist.length - 1].v} cm</b>${wr ? ` <span class="pill" style="background:${wr.key === 'low' ? 'var(--green)' : 'var(--orange)'};color:#fff">${wr.label}</span>` : ''}</span></div>${sparkline(waist)}
+      ${wr ? `<p class="tiny muted">Health guide (${D.profile.sex === 'female' ? 'women' : 'men'}): under ${wr.limits[0]} cm is lower risk, ${wr.limits[0]}–${wr.limits[1]} cm increased, over ${wr.limits[1]} cm high. Waist tracks belly fat better than weight alone.</p>` : (D.profile.sex === 'unspecified' || !D.profile.sex ? '<p class="tiny muted">Set your gender in Settings to see the waist health ranges, which differ for men and women.</p>' : '')}
       <p class="tiny muted">${waist.length > 1 ? `${(waist[waist.length - 1].v - waist[0].v).toFixed(1)} cm since ${DateX.pretty(waist[0].date)}` : 'Log it weekly to see a trend.'}</p></div>` : ''}
     <div class="card"><h2>Entries</h2>${list.length ? `<ul class="exlist">${shown.map((p, i) => { const prev = list[V.showAllWeights ? i + 1 : i + 1]; const d = prev ? p.kg - prev.kg : null;
       return `<li><button class="exrow" data-act="openDay" data-date="${p.date}" style="min-height:48px"><div class="grow">${DateX.pretty(p.date, { weekday: 'short', year: 'numeric' })}</div><b>${p.kg.toFixed(1)} kg</b><span class="tiny muted" style="min-width:48px;text-align:right">${d == null ? '' : (d > 0 ? '+' : '') + d.toFixed(1)}</span></button></li>`; }).join('')}</ul>
       ${list.length > 10 ? `<button class="btn ghost block" data-act="toggleWeights">${V.showAllWeights ? 'Show fewer' : `Show all ${list.length}`}</button>` : ''}` : '<p class="muted small">No weigh-ins yet. Morning, after the bathroom, before eating gives the most consistent numbers.</p>'}</div>
     ${footer()}</main>`;
+}
+function bmiCard(b) {
+  if (!b) return `<div class="card small muted">Add your height in Settings to see your BMI and the healthy weight range for your height.</div>`;
+  const col = b.key === 'healthy' ? 'var(--green)' : b.key === 'under' || b.key === 'over' ? 'var(--orange)' : 'var(--red)';
+  return `<div class="card stack"><div class="spread"><h2>BMI</h2><span><b>${b.bmi.toFixed(1)}</b> <span class="pill" style="background:${col};color:#fff">${b.label}</span></span></div>
+    <div class="bmi-bar" aria-hidden="true"><i style="left:${clamp(((b.bmi - 15) / 25) * 100, 0, 100)}%"></i></div>
+    <div class="legend"><span>&lt;18.5 under</span><span>18.5–24.9 healthy</span><span>25–29.9 over</span><span>30+ obese</span></div>
+    <p class="small">Healthy weight range for your height: <b>${b.healthyLo.toFixed(0)}–${b.healthyHi.toFixed(0)} kg</b>.</p>
+    <p class="tiny muted">BMI uses your trend weight. It doesn't account for muscle, so treat it as a rough guide alongside your waist measurement.</p></div>`;
 }
 function weightChart(pr, range) {
   const pts = pr.series, t = today();
@@ -2002,12 +2099,13 @@ function viewCalendar() {
   let g = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => `<div class="dow">${d}</div>`).join('');
   for (let i = 0; i < cells; i++) {
     const d = DateX.add(gs, i), so = sessionOn(d, D), e = D.days[d] || {};
-    const done = workoutsOn(d, D).length > 0, sess = so.session;
+    const done = trainingOn(d, D).length > 0, sess = so.session;
     const dots = [];
     if (done) dots.push('d-done');
     else if (sess && sess.type === 'vr') dots.push('d-vr');
     else if (so.paused || (sess && sess.type === 'rest')) dots.push('d-rest');
     else if (sess && isTraining(sess) && d < t) dots.push('d-miss');
+    if (extrasOn(d, D).length && !dots.includes('d-vr')) dots.push('d-vr');
     if (e.diet) dots.push('d-diet');
     if (e.weight != null) dots.push('d-wt');
     const lbl = [DateX.pretty(d, { weekday: 'long', month: 'long' }), sess ? `plan day ${sess.day}` : '', done ? 'workout done' : '', e.diet ? 'diet on track' : '', e.weight != null ? `weight ${e.weight}` : ''].filter(Boolean).join(', ');
@@ -2018,7 +2116,7 @@ function viewCalendar() {
     <div class="topbar"><h1>Calendar</h1>${flameHTML()}</div>
     <div class="spread"><button class="btn icon" data-act="calNav" data-d="-1" aria-label="Previous month">‹</button><h2>${title}</h2><button class="btn icon" data-act="calNav" data-d="1" aria-label="Next month">›</button></div>
     <div class="cal">${g}</div>
-    <div class="legend"><span><i class="d-done"></i>workout done</span><span><i class="d-vr"></i>VR / game day</span><span><i class="d-rest"></i>rest / moved</span><span><i class="d-miss"></i>missed</span><span><i class="d-diet"></i>diet on track</span><span><i class="d-wt"></i>weight logged</span></div>
+    <div class="legend"><span><i class="d-done"></i>workout done</span><span><i class="d-vr"></i>VR / game day or extra session</span><span><i class="d-rest"></i>rest / moved</span><span><i class="d-miss"></i>missed</span><span><i class="d-diet"></i>diet on track</span><span><i class="d-wt"></i>weight logged</span></div>
     <p class="tiny muted">Tap a day to view or edit it. Missed days aren't a big deal. Today's screen offers to shift the plan or skip ahead.</p>
     ${weekCard()}${footer()}</main>`;
 }
@@ -2036,6 +2134,8 @@ function viewSettings() {
       <div class="grid2"><label class="field"><span>${D.phases.length ? 'Phase start date' : 'Start date'}</span><input type="date" data-field="profile.startDate" value="${p.startDate || ''}"></label>
       ${p.mode === 'maintain' ? '<div></div>' : `<label class="field"><span>Goal date</span><input type="date" data-field="profile.goalDate" value="${p.goalDate || ''}"></label>`}</div>
       <div class="grid3">${numField('Start kg', 'profile.startWeight', p.startWeight, 30, 400, 0.1)}${numField(p.mode === 'maintain' ? 'Target kg' : 'Goal kg', 'profile.goalWeight', p.goalWeight, 30, 400, 0.1)}${numField('Height cm', 'profile.heightCm', p.heightCm, 100, 250)}</div>
+      <label class="field"><span>Gender (optional)</span><select data-field="profile.sex">${Object.entries(SEXES).map(([k, l]) => `<option value="${k}" ${(p.sex || 'unspecified') === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      <p class="tiny muted">Used for the waist health ranges and a starting dumbbell weight. Workouts are the same for everyone.</p>
       <p class="tiny muted">Changing the start date moves this phase's plan.</p></div>
     <div class="card stack"><h2>Workouts</h2>
       <div class="grid2">${numField('Rest between exercises (s)', 'settings.rest', st.rest, 0, 120)}${numField('Strength rest (s)', 'settings.restDb', st.restDb, 0, 180)}</div>
@@ -2187,16 +2287,19 @@ function keepCopy() { try { localStorage.setItem(APP.storageKey + '.before-impor
 
 /* ---------- Actions ---------- */
 const ACT = {
+  extraOpen: () => { V.open = { extra: true, key: 'x' + today() }; render(); window.scrollTo(0, 0); },
   tab: (el) => { V.tab = el.dataset.tab; V.open = null; render(); window.scrollTo(0, 0); },
   setupDone: () => {
     const v = (id) => $('#' + id).value, n = (id) => (v(id) === '' ? null : parseFloat(v(id)));
-    const start = v('su-start'), sw = n('su-sw'), gw = n('su-gw'), gd = v('su-gd'), hc = n('su-h');
+    const start = v('su-start'), sw = n('su-sw'), gw = n('su-gw'), gd = v('su-gd'), hc = n('su-h'), sex = SEXES[v('su-sex')] ? v('su-sex') : 'unspecified';
     if (!DateX.valid(start)) { toast('Pick a start date.'); return; }
     if (sw != null && (sw < 30 || sw > 400)) { toast('Start weight should be in kg.'); return; }
     if (gw != null && (gw < 30 || gw > 400)) { toast('Goal weight should be in kg.'); return; }
     if (gd && !DateX.valid(gd)) { toast('Pick a valid goal date.'); return; }
+    if (hc != null && (hc < 100 || hc > 250)) { toast('Height should be in cm.'); return; }
     commit((d) => {
-      d.profile = { startDate: start, startWeight: sw, goalWeight: gw, goalDate: gd || null, heightCm: hc };
+      d.profile = Object.assign(d.profile, { startDate: start, startWeight: sw, goalWeight: gw, goalDate: gd || null, heightCm: hc, sex });
+      d.settings.dumbbellKg = DUMBBELL_START[sex];
       d.meta.setupDone = true; d.meta.createdAt = new Date().toISOString();
       if (sw != null && !(d.days[start] && d.days[start].weight != null)) setDay(start, { weight: sw });
     });
@@ -2272,11 +2375,13 @@ const ACT = {
   vrSave: () => {
     const s = V.sheet, total = allGames(D).reduce((a, g) => a + (s.min[g.id] || 0), 0);
     if (!total) { toast('Enter the minutes you played.'); return; }
-    const key = V.open.key, kcal = vrKcal(s.min, D, currentKg()), vr = {};
+    const key = V.open.key, extra = !!V.open.extra, kcal = vrKcal(s.min, D, currentKg()), vr = {};
     allGames(D).forEach((g) => { if (s.min[g.id]) vr[g.id] = s.min[g.id]; });
     V.sheet = null;
+    if (extra) V.open = null; // back to Today
     commit((d) => {
-      d.workouts.push({ id: uid(), t: Date.now(), date: today(), planKey: key, type: 'vr', title: 'VR / game session', vr, kcal, effort: s.effort, durationSec: total * 60 });
+      d.workouts.push(Object.assign({ id: uid(), t: Date.now(), date: today(), type: 'vr', vr, kcal, effort: s.effort, durationSec: total * 60 },
+        extra ? { extra: true, title: 'Extra VR / game session' } : { planKey: key, title: 'VR / game session' }));
       d.vrActive = null;
     });
     toast(`Logged ${total} min of VR / games, about ${fmtE(kcal)}`);
@@ -2397,6 +2502,7 @@ function onField(el, live) {
     setPath(D[root], parts, v);
     commit(null, { render: false });
     if (path === 'settings.theme') applyTheme();
+    if (path === 'profile.sex' && !Object.keys(D.loads).length) { D.settings.dumbbellKg = DUMBBELL_START[v] || D.settings.dumbbellKg; Store.save(); toast(`Starting dumbbell weight set to ${D.settings.dumbbellKg} kg (change it under Workouts).`); }
     if (el.type === 'range') { const lab = el.closest('label').querySelector('span'); if (lab) lab.textContent = lab.textContent.replace(/[\d.]+(×|%)/, path.endsWith('rate') ? v.toFixed(1) + '×' : Math.round(v * 100) + '%'); }
     if (el.type !== 'range') softRender();
   }

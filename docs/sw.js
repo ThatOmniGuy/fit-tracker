@@ -1,7 +1,7 @@
 // Offline cache for the app shell. Cache-first: once installed, the app never
 // needs the network. To ship an update, change CACHE below and re-upload;
 // the phone picks it up the next time it opens the app while online.
-const CACHE = 'fit-tracker-v5';
+const CACHE = 'fit-tracker-v6';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {
