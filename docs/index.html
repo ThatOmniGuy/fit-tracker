@@ -1,0 +1,2429 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fit Tracker">
+<meta name="theme-color" content="#101622">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Fit Tracker</title>
+<style>
+:root{
+  --bg:#101622; --bg2:#172033; --card:#1c2740; --card2:#243150; --line:#2c3a5a;
+  --text:#eef2fa; --muted:#a3afc6; --blue:#2f80ed; --blue2:#1f6ad6; --green:#34c77b;
+  --orange:#ff9540; --purple:#a77bf3; --red:#ef5b5b; --yellow:#f2c94c;
+  --radius:16px; --tap:48px;
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-l:env(safe-area-inset-left,0px); --safe-r:env(safe-area-inset-right,0px);
+  color-scheme:dark;
+}
+@media (prefers-color-scheme:light){
+  :root:not([data-theme="dark"]){
+    --bg:#f3f5fa; --bg2:#e8ecf4; --card:#ffffff; --card2:#eef2f9; --line:#d5dceb;
+    --text:#131a2a; --muted:#56627a; --blue:#1f6ad6; --blue2:#1857b3; --green:#1d9a5a;
+    --orange:#d9661a; --purple:#7b4fd1; --red:#c93a3a; --yellow:#a77a00; color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#f3f5fa; --bg2:#e8ecf4; --card:#ffffff; --card2:#eef2f9; --line:#d5dceb;
+  --text:#131a2a; --muted:#56627a; --blue:#1f6ad6; --blue2:#1857b3; --green:#1d9a5a;
+  --orange:#d9661a; --purple:#7b4fd1; --red:#c93a3a; --yellow:#a77a00; color-scheme:light;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text)}
+body{font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-text-size-adjust:100%;min-height:100vh;overscroll-behavior-y:none}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--blue)}
+h1,h2,h3{margin:0;line-height:1.2}
+h1{font-size:28px;font-weight:800}
+h2{font-size:20px;font-weight:700}
+h3{font-size:16px;font-weight:700}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+.tiny{font-size:12px}
+.hidden{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* Layout */
+.screen{padding:calc(var(--safe-t) + 16px) calc(var(--safe-r) + 16px) calc(var(--safe-b) + 96px) calc(var(--safe-l) + 16px);
+  max-width:640px;margin:0 auto}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.stack>*+*{margin-top:12px}
+.row{display:flex;align-items:center;gap:10px}
+.row.wrap{flex-wrap:wrap}
+.spread{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.grow{flex:1;min-width:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.card.flat{background:var(--bg2)}
+.card h2{margin-bottom:8px}
+.card.accent{border-color:var(--blue)}
+.card.warn{border-color:var(--orange)}
+.msg{background:linear-gradient(135deg,var(--card2),var(--card));border-left:4px solid var(--orange)}
+.stat{background:var(--bg2);border-radius:12px;padding:10px;text-align:center}
+.stat b{display:block;font-size:20px}
+.stat span{font-size:12px;color:var(--muted)}
+
+/* Buttons */
+.btn{min-height:var(--tap);border:0;border-radius:12px;padding:0 18px;background:var(--card2);color:var(--text);
+  font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.primary:active{background:var(--blue2)}
+.btn.good{background:var(--green);border-color:var(--green);color:#fff}
+.btn.danger{background:transparent;border-color:var(--red);color:var(--red)}
+.btn.ghost{background:transparent}
+.btn.block{width:100%}
+.btn.big{min-height:60px;font-size:20px;border-radius:30px;letter-spacing:.5px}
+.btn.icon{width:var(--tap);padding:0;font-size:22px}
+.btn:disabled{opacity:.5}
+.chip{display:inline-flex;align-items:center;min-height:32px;padding:4px 12px;border-radius:16px;background:var(--bg2);
+  border:1px solid var(--line);font-size:14px}
+.chip.on{background:var(--blue);border-color:var(--blue);color:#fff}
+button.chip{min-height:44px}
+.pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:700;background:var(--bg2)}
+.pill.vr{background:var(--purple);color:#fff}
+.pill.rest{background:var(--line)}
+.pill.db{background:var(--orange);color:#fff}
+.pill.done{background:var(--green);color:#fff}
+
+/* Forms */
+label.field{display:block}
+label.field>span,div.field>span{display:block;font-size:14px;color:var(--muted);margin-bottom:4px}
+.status-box{min-height:var(--tap);display:flex;align-items:center;padding:8px 12px;border-radius:12px;background:var(--bg2);
+  border:1px solid var(--line);color:var(--muted);font-weight:600}
+.status-box.done{color:var(--green);border-color:var(--green)}
+input[type=number],input[type=date],input[type=text],select,textarea{width:100%;min-height:var(--tap);
+  background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+textarea{min-height:80px;resize:vertical}
+.check{display:flex;align-items:center;gap:12px;min-height:var(--tap);cursor:pointer}
+.check input{width:28px;height:28px;accent-color:var(--green)}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;min-height:var(--tap);border-radius:10px;border:1px solid var(--line);background:var(--bg2);font-weight:700}
+.seg button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.toggle{display:flex;align-items:center;justify-content:space-between;min-height:var(--tap);gap:12px}
+.toggle input{width:28px;height:28px;accent-color:var(--blue)}
+input[type=range]{width:100%;min-height:var(--tap);accent-color:var(--blue)}
+
+/* Tab bar */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;background:var(--bg2);border-top:1px solid var(--line);
+  padding:0 var(--safe-r) var(--safe-b) var(--safe-l)}
+.tabbar button{flex:1;min-height:58px;background:none;border:0;color:var(--muted);font-size:11px;font-weight:600;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.tabbar button svg{width:24px;height:24px}
+.tabbar button[aria-current="page"]{color:var(--blue)}
+
+/* Plan timeline */
+.timeline{position:relative;padding-left:22px}
+.timeline:before{content:"";position:absolute;left:8px;top:8px;bottom:8px;width:2px;background:var(--line)}
+.tl-item{position:relative;margin-bottom:10px}
+.tl-item:before{content:"";position:absolute;left:-19px;top:22px;width:12px;height:12px;border-radius:50%;
+  background:var(--bg);border:2px solid var(--line)}
+.tl-item.done:before{background:var(--green);border-color:var(--green)}
+.tl-item.today:before{background:var(--blue);border-color:var(--blue)}
+.daycard{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);
+  border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;min-height:72px}
+.daycard.today{border-color:var(--blue);border-width:2px}
+.daycard .thumb{width:56px;height:56px;flex:none}
+.flame{display:inline-flex;align-items:center;gap:4px;font-weight:800;color:var(--orange);min-height:44px}
+.flame svg{width:22px;height:22px}
+
+/* Day overview */
+.hero{border-radius:var(--radius);background:linear-gradient(160deg,#2f80ed 0%,#1b3b7a 70%);color:#fff;
+  height:170px;position:relative;overflow:hidden;display:flex;align-items:flex-end;padding:16px}
+.hero.vr{background:linear-gradient(160deg,#8b5cf6 0%,#3b1f7a 70%)}
+.hero.db{background:linear-gradient(160deg,#ff9540 0%,#7a3a12 75%)}
+.hero.rest{background:linear-gradient(160deg,#4a5874 0%,#222b3d 75%)}
+.hero .fig{position:absolute;right:6px;top:6px;width:150px;height:150px;opacity:.95}
+.hero .fig svg{width:100%;height:100%}
+.hero .back{position:absolute;left:10px;top:10px}
+.hero .back .btn{background:rgba(0,0,0,.3);border:0;color:#fff}
+.dayno{font-size:34px;font-weight:900;letter-spacing:.5px}
+.exlist{list-style:none;margin:0;padding:0}
+.exlist li+li{border-top:1px solid var(--line)}
+.exrow{display:flex;align-items:center;gap:12px;width:100%;background:none;border:0;text-align:left;padding:8px 0;min-height:64px}
+.exrow .thumb{width:52px;height:52px;flex:none;background:var(--bg2);border-radius:10px}
+.exrow .nm{font-weight:800;text-transform:uppercase;font-size:14px;letter-spacing:.3px}
+.exrow .dose{color:var(--muted);font-size:14px}
+.group-h{font-size:13px;font-weight:800;color:var(--orange);text-transform:uppercase;padding:10px 0 4px;letter-spacing:.5px}
+.bottombar{position:fixed;left:0;right:0;bottom:0;z-index:25;display:flex;gap:12px;align-items:center;
+  padding:12px calc(var(--safe-r) + 16px) calc(var(--safe-b) + 12px) calc(var(--safe-l) + 16px);
+  background:var(--bg2);border-top:1px solid var(--line)}
+.bottombar .btn.big{flex:1}
+
+/* Sheets */
+.overlay{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--card);width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;
+  padding:16px calc(var(--safe-r) + 16px) calc(var(--safe-b) + 16px) calc(var(--safe-l) + 16px)}
+.sheet .grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 12px}
+.tabs{display:flex;gap:6px;margin:10px 0}
+.tabs button{flex:1;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);font-weight:700}
+.tabs button[aria-selected="true"]{background:var(--blue);border-color:var(--blue);color:#fff}
+.art{background:var(--bg2);border-radius:14px;display:flex;align-items:center;justify-content:center;aspect-ratio:4/3}
+.art svg,.art img,.art video{width:100%;height:100%;object-fit:contain;border-radius:14px}
+.textcue{padding:20px;text-align:center;font-size:18px;font-weight:700}
+
+/* Player */
+.player{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;
+  padding:calc(var(--safe-t) + 10px) calc(var(--safe-r) + 16px) calc(var(--safe-b) + 16px) calc(var(--safe-l) + 16px)}
+.player .pbar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.player .pbar i{display:block;height:100%;background:var(--blue);transition:width .3s}
+.player .pfig{flex:1;min-height:120px;display:flex;align-items:center;justify-content:center}
+.player .pfig svg{max-height:100%;width:100%;max-width:340px}
+.player .pname{font-size:28px;font-weight:900;text-align:center;text-transform:uppercase;line-height:1.15}
+.player .ptarget{font-size:72px;font-weight:900;text-align:center;font-variant-numeric:tabular-nums;line-height:1}
+.player .pnext{text-align:center;color:var(--muted);min-height:22px}
+.player.rest{background:linear-gradient(180deg,#1f6ad6,#123a78);color:#fff}
+.player.rest .pnext,.player.rest .muted{color:#dbe6ff}
+.pcontrols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px}
+.pcontrols .btn{min-height:56px}
+
+/* Calendar */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal .dow{text-align:center;font-size:12px;color:var(--muted);padding:4px 0}
+.cal button{min-height:52px;border-radius:10px;border:1px solid var(--line);background:var(--card);padding:4px 2px;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;font-size:13px}
+.cal button.out{opacity:.35}
+.cal button.today{border-color:var(--blue);border-width:2px}
+.cal .dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center}
+.cal .dot{width:7px;height:7px;border-radius:50%}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.d-done{background:var(--green)} .d-vr{background:var(--purple)} .d-rest{background:var(--muted)}
+.d-diet{background:var(--yellow)} .d-wt{background:var(--blue)} .d-miss{background:var(--red)}
+
+/* Chart */
+.chart svg{width:100%;height:auto;display:block}
+.chart .axis{stroke:var(--line);stroke-width:1}
+.chart text{fill:var(--muted);font-size:10px}
+
+/* Toast */
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--safe-b) + 80px);z-index:90;
+  background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;max-width:90vw}
+.footer-note{font-size:12px;color:var(--muted);text-align:center;margin-top:24px}
+.figsvg .body{stroke:currentColor;stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.figsvg .head{fill:currentColor}
+.figsvg .ground{stroke:var(--line);stroke-width:2}
+.figsvg .db{stroke:var(--orange);stroke-width:6;stroke-linecap:round}
+.figsvg{color:var(--text)}
+.hero .figsvg{color:#fff}
+.player.rest .figsvg{color:#fff}
+@media (prefers-reduced-motion:reduce){ .figsvg animate{display:none} }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<!-- Pure logic + data (no DOM). Tests load this block on its own. -->
+<script id="core">
+'use strict';
+/* =====================================================================
+   DATA: exercise library, poses, seeded days, templates, cycles.
+   Edit this section to change the plan. Logic lives further down.
+   ===================================================================== */
+const APP = { storageKey: 'fitTracker', schema: 1, kcalRefKg: 99, kcalFactor: 1.15, cycleLen: 31 };
+
+// E(id, name, mode, area, focus, tier, met, dose[start,end], pose[a,b], cue, extra)
+//  mode: 'reps' | 'time'.  dose: cycle-1 start and end values (reps or seconds).
+//  met: rough intensity for kcal estimates.  extra: seeded, hi (high impact), alt (low-impact swap),
+//  base/side (left/right variants), mirror (flip art), cap (upper bound), equip ('db'), tempo (s/rep).
+const LIBRARY = {};
+function E(id, name, mode, area, focus, tier, met, dose, pose, cue, extra) {
+  LIBRARY[id] = Object.assign({ id, name, mode, area, focus: focus.split(','), tier, met, dose, pose, cue,
+    seeded: false, hi: false, alt: null, equip: 'none', tempo: 2.5, cap: mode === 'reps' ? 50 : 120 }, extra || {});
+}
+const S = { seeded: true };
+const side = (base, s, more) => Object.assign({ base, side: s, mirror: s === 'right' }, more || {});
+
+// ---- Seeded (from the original 30-day plan) ----
+E('side_step_jacks', 'Side step jacks', 'time', 'cardio', 'shoulders,calves,glutes', 1, 5, [30, 30], ['front', 'stepout'], 'Step one foot out to the side as your arms rise, then switch. Light and rhythmic, no jumping.', S);
+E('standing_bicycle_crunch', 'Standing bicycle crunches', 'reps', 'core', 'obliques,abs,hip flexors', 1, 4.5, [20, 24], ['handshead', 'kneetwist'], 'Hands behind your head. Lift one knee and bring the opposite elbow down to meet it. Alternate sides.', S);
+E('jumping_jacks', 'Jumping jacks', 'time', 'cardio', 'full body,calves,shoulders', 1, 8, [30, 30], ['front', 'jack'], 'Jump your feet out as your arms go overhead, then back in. Land softly on the balls of your feet.', { seeded: true, hi: true, alt: 'side_step_jacks' });
+E('inchworms', 'Inchworms', 'time', 'full', 'hamstrings,shoulders,core', 1, 4, [30, 30], ['fold', 'highplank'], 'Fold forward, walk your hands out to a plank, then walk them back and stand up. Bend your knees as much as you need.', S);
+E('dead_bug', 'Dead bug', 'reps', 'core', 'abs,deep core,hip flexors', 1, 3.8, [16, 20], ['deadbug', 'deadbug2'], 'On your back, arms up, knees bent at 90°. Slowly lower the opposite arm and leg while your lower back stays pressed down.', S);
+E('heel_touch', 'Heel touch', 'reps', 'core', 'obliques,abs', 1, 3.8, [16, 24], ['heeltouch', 'heeltouch2'], 'On your back, knees bent, shoulders slightly lifted. Reach side to side to tap each heel.', S);
+E('plank', 'Plank', 'time', 'core', 'abs,shoulders,glutes', 1, 4, [30, 60], ['plank', 'plank_b'], 'Forearms under shoulders, body in one straight line from head to heels. Squeeze your glutes and keep breathing.', S);
+E('high_knee_twist', 'High knee with twist', 'reps', 'cardio', 'obliques,hip flexors,calves', 1, 7, [20, 24], ['handshead', 'kneetwist'], 'Drive each knee up and twist the opposite elbow toward it. Quick but controlled.', { seeded: true, hi: true, alt: 'standing_bicycle_crunch' });
+E('bird_dog', 'Bird dog', 'reps', 'core', 'lower back,glutes,abs', 1, 3, [20, 24], ['allfours', 'birddog'], 'On hands and knees, reach one arm forward and the opposite leg back. Pause, return, switch. Keep your hips level.', S);
+E('ab_crunch', 'Abdominal crunches', 'reps', 'core', 'abs', 1, 3.8, [10, 22], ['crunch', 'crunch_up'], 'On your back, knees bent. Lift your shoulders using your abs, then lower slowly. Don\'t pull on your neck.', S);
+E('crossover_crunch', 'Crossover crunch', 'reps', 'core', 'obliques,abs', 1, 3.8, [16, 20], ['crunch', 'crossover'], 'On your back with one ankle on the opposite knee. Crunch up, bringing your elbow toward that knee. Switch sides halfway.', S);
+E('knee_plank', 'Knee plank', 'time', 'core', 'abs,shoulders', 1, 3, [20, 30], ['kneeplank', 'kneeplank_b'], 'Plank on your forearms and knees, straight line from head to knees.', S);
+E('cobra_stretch', 'Cobra stretch', 'time', 'stretch', 'abs,lower back', 1, 2.3, [20, 30], ['prone', 'cobra'], 'Lie face down, hands under your shoulders. Gently press your chest up while your hips stay down. Breathe.', S);
+E('lying_twist_l', 'Lying twist stretch left', 'time', 'stretch', 'lower back,glutes,obliques', 1, 2.3, [20, 30], ['twist', 'twist_b'], 'On your back, drop both bent knees to the left, arms out wide. Look the other way and relax.', side('Lying twist stretch', 'left', S));
+E('lying_twist_r', 'Lying twist stretch right', 'time', 'stretch', 'lower back,glutes,obliques', 1, 2.3, [20, 30], ['twist', 'twist_b'], 'On your back, drop both bent knees to the right, arms out wide. Look the other way and relax.', side('Lying twist stretch', 'right', S));
+E('kick_crunch', 'Kick crunch', 'time', 'core', 'abs,hip flexors', 1, 4.5, [30, 30], ['kick_in', 'kick_out'], 'Sit leaning back on your hands. Pull your knees in, then kick your legs out long. Smooth and steady.', S);
+E('russian_twist', 'Russian twist', 'reps', 'core', 'obliques,abs', 1, 3.8, [12, 20], ['vsit', 'vsit_b'], 'Sit leaning back, knees bent, feet down or lifted. Rotate your hands from side to side.', S);
+E('toe_tap', 'Toe tap', 'reps', 'core', 'lower abs', 1, 3.5, [16, 20], ['tabletop', 'toetap'], 'On your back, knees bent at 90° in the air. Lower one foot to tap the floor, bring it back, switch.', S);
+E('leg_raise', 'Leg raises', 'reps', 'core', 'lower abs,hip flexors', 1, 3.8, [5, 22], ['lying', 'legraise'], 'On your back, legs straight. Raise them to vertical and lower slowly. Hands under your hips if your back lifts.', S);
+E('butt_bridge', 'Butt bridge', 'reps', 'legs', 'glutes,hamstrings,lower back', 1, 3.5, [15, 20], ['bridge', 'bridge_up'], 'On your back, knees bent. Push through your heels to lift your hips, squeeze, and lower.', S);
+E('bent_leg_twist', 'Bent leg twist', 'reps', 'core', 'obliques', 1, 3.5, [16, 20], ['tabletop', 'tabletop_twist'], 'On your back, knees bent at 90° in the air, arms out. Lower your knees side to side with control.', S);
+E('single_leg_drop', 'Single leg drops', 'reps', 'core', 'lower abs', 1, 3.5, [8, 12], ['legraise', 'legdrop'], 'On your back, both legs up. Lower one leg toward the floor, bring it back, switch.', S);
+E('knees_to_chest', 'Double knees to chest', 'time', 'stretch', 'lower back,glutes', 1, 2.3, [20, 30], ['kneeshug', 'kneeshug_b'], 'On your back, hug both knees to your chest. Rock gently if it feels good.', S);
+E('lumbar_twist_l', 'Spine lumbar twist stretch left', 'time', 'stretch', 'lower back,obliques', 1, 2.3, [20, 30], ['twist', 'twist_b'], 'On your back, bring your right knee across to the left. Keep both shoulders on the floor.', side('Spine lumbar twist stretch', 'left', S));
+E('lumbar_twist_r', 'Spine lumbar twist stretch right', 'time', 'stretch', 'lower back,obliques', 1, 2.3, [20, 30], ['twist', 'twist_b'], 'On your back, bring your left knee across to the right. Keep both shoulders on the floor.', side('Spine lumbar twist stretch', 'right', S));
+E('skipping', 'Skipping without rope', 'time', 'cardio', 'calves,shoulders,full body', 1, 8.5, [30, 30], ['skip', 'skip_b'], 'Hop lightly from foot to foot as if turning a rope. Stay on the balls of your feet.', { seeded: true, hi: true, alt: 'march' });
+E('reclined_oblique_twist', 'Reclined oblique twist', 'reps', 'core', 'obliques,abs', 1, 3.8, [10, 16], ['recline', 'recline_b'], 'Sit leaning back at about 45°, arms in front. Rotate to one side, back to centre, then the other.', S);
+E('mountain_climber', 'Mountain climber', 'reps', 'cardio', 'abs,shoulders,hip flexors', 2, 8, [22, 30], ['climb', 'climb_b'], 'From a high plank, drive your knees toward your chest one at a time. Keep your hips low.', { seeded: true, hi: true, alt: 'slow_mountain_climber' });
+E('slow_mountain_climber', 'Slow mountain climber', 'time', 'core', 'abs,shoulders', 1, 5, [30, 30], ['climb', 'climb_b'], 'High plank. Bring one knee to your chest slowly, return, switch. Control over speed.', S);
+E('oblique_crunch_reach', 'Oblique crunch reach', 'reps', 'core', 'obliques', 1, 3.8, [10, 16], ['crunch', 'heeltouch2'], 'On your back, knees bent. Crunch up and reach one hand past the outside of the opposite knee.', S);
+E('high_stepping', 'High stepping', 'time', 'cardio', 'glutes,quadriceps,hamstrings,calves', 1, 7, [20, 30], ['stand', 'highknee'], 'Run in place pulling your knees high; keep your upper body upright.', { seeded: true, hi: true, alt: 'march' });
+E('sit_up', 'Sit-ups', 'reps', 'core', 'abs,hip flexors', 2, 4.5, [10, 20], ['crunch', 'situp'], 'On your back, knees bent, feet flat. Curl all the way up to sitting, then lower with control.', S);
+E('side_bridge_r', 'Side bridges right', 'reps', 'core', 'obliques,glutes', 2, 4, [12, 22], ['sidebridge_dn', 'sideplank'], 'Lie on your right side, propped on your forearm. Lift your hips off the floor, lower, repeat.', side('Side bridges', 'right', S));
+E('side_bridge_l', 'Side bridges left', 'reps', 'core', 'obliques,glutes', 2, 4, [12, 22], ['sidebridge_dn', 'sideplank'], 'Lie on your left side, propped on your forearm. Lift your hips off the floor, lower, repeat.', side('Side bridges', 'left', S));
+E('bicycle_crunch', 'Bicycle crunches', 'reps', 'core', 'obliques,abs', 2, 4.5, [16, 24], ['bike', 'bike_b'], 'On your back, hands behind your head. Bring one elbow toward the opposite knee as the other leg extends. Alternate.', S);
+E('t_plank_l', 'T plank left', 'reps', 'core', 'obliques,shoulders,abs', 2, 4.5, [6, 10], ['highplank', 'tplank'], 'From a high plank, rotate open to the left and reach your left arm to the ceiling. Return and repeat.', side('T plank', 'left', S));
+E('t_plank_r', 'T plank right', 'reps', 'core', 'obliques,shoulders,abs', 2, 4.5, [6, 10], ['highplank', 'tplank'], 'From a high plank, rotate open to the right and reach your right arm to the ceiling. Return and repeat.', side('T plank', 'right', S));
+E('side_plank_r', 'Side plank right', 'time', 'core', 'obliques,shoulders', 2, 4, [20, 40], ['sideplank', 'sideplank_b'], 'On your right forearm, feet stacked, lift your hips into a straight line and hold. Drop your bottom knee to make it easier.', side('Side plank', 'right', S));
+E('side_plank_l', 'Side plank left', 'time', 'core', 'obliques,shoulders', 2, 4, [20, 40], ['sideplank', 'sideplank_b'], 'On your left forearm, feet stacked, lift your hips into a straight line and hold. Drop your bottom knee to make it easier.', side('Side plank', 'left', S));
+
+// ---- Added: cardio and warm-up ----
+E('march', 'March in place', 'time', 'cardio', 'hip flexors,calves', 1, 4, [30, 45], ['stand', 'march'], 'March on the spot, knees to hip height, arms swinging. Low impact, steady breathing.');
+E('butt_kicks', 'Butt kicks', 'time', 'cardio', 'hamstrings,calves', 1, 7, [30, 30], ['stand', 'buttkick'], 'Jog in place, flicking your heels up toward your glutes.', { hi: true, alt: 'march' });
+E('skater_hops', 'Skater hops', 'time', 'cardio', 'glutes,quadriceps,calves', 2, 7.5, [30, 30], ['skate', 'skate_b'], 'Leap side to side, landing softly on one foot as the other sweeps behind you.', { hi: true, alt: 'skater_step' });
+E('skater_step', 'Skater steps', 'time', 'cardio', 'glutes,quadriceps', 1, 5, [30, 30], ['skate', 'skate_b'], 'Step wide to one side and sweep the other leg behind you, then switch. No jumping.');
+E('shadow_boxing', 'Shadow boxing', 'time', 'cardio', 'shoulders,arms,core', 1, 6, [30, 45], ['box', 'box_b'], 'Light on your feet, guard up. Throw quick straight punches, alternating hands.');
+E('arm_circles', 'Arm circles', 'time', 'mobility', 'shoulders', 1, 2.8, [30, 30], ['tee', 'tee_b'], 'Arms out to the sides. Make small circles that slowly get bigger. Switch direction halfway.');
+// ---- Added: legs and glutes ----
+E('squat', 'Squats', 'reps', 'legs', 'quadriceps,glutes,hamstrings', 1, 5, [10, 20], ['stand', 'squat'], 'Feet shoulder-width apart. Sit back and down as if into a chair, chest up, then stand tall.');
+E('sumo_squat', 'Sumo squats', 'reps', 'legs', 'inner thighs,glutes,quadriceps', 1, 5, [10, 20], ['front', 'sumo'], 'Wide stance, toes turned out. Lower straight down with knees tracking over your toes, then stand.');
+E('reverse_lunge', 'Reverse lunges', 'reps', 'legs', 'glutes,quadriceps,hamstrings', 2, 5, [10, 16], ['hipsstand', 'lunge'], 'Step one foot back and lower until both knees are bent. Push back up. Alternate legs.');
+E('wall_sit', 'Wall sit', 'time', 'legs', 'quadriceps,glutes', 2, 4, [20, 45], ['wallsit', 'wallsit_b'], 'Back flat against a wall, slide down until your knees are near 90°. Hold. Higher is easier.');
+E('calf_raise', 'Calf raises', 'reps', 'legs', 'calves', 1, 3, [16, 24], ['stand', 'tiptoe'], 'Rise onto the balls of your feet, pause, lower slowly. Hold a wall for balance if you like.');
+E('glute_bridge_march', 'Glute bridge march', 'reps', 'legs', 'glutes,hamstrings,core', 1, 4, [12, 20], ['bridge_up', 'bridge_march'], 'Hold a bridge, then lift one foot a few centimetres, set it down, switch. Keep your hips level.');
+E('single_leg_bridge_l', 'Single leg bridge left', 'reps', 'legs', 'glutes,hamstrings', 2, 4, [8, 12], ['bridge', 'slbridge'], 'On your back, left foot planted, right leg straight. Push through your left heel to lift your hips.', side('Single leg bridge', 'left'));
+E('single_leg_bridge_r', 'Single leg bridge right', 'reps', 'legs', 'glutes,hamstrings', 2, 4, [8, 12], ['bridge', 'slbridge'], 'On your back, right foot planted, left leg straight. Push through your right heel to lift your hips.', side('Single leg bridge', 'right'));
+// ---- Added: chest, shoulders, triceps ----
+E('knee_pushup', 'Knee push-ups', 'reps', 'upper', 'chest,triceps,shoulders', 1, 3.8, [6, 12], ['kneepush', 'kneepush_b'], 'Hands under shoulders, knees down. Lower your chest toward the floor, then press back up.');
+E('incline_pushup', 'Incline push-ups', 'reps', 'upper', 'chest,triceps,shoulders', 1, 3.8, [8, 14], ['highplank', 'pushup_dn'], 'Hands on a sturdy couch or bed edge, body straight. Lower your chest to the edge and press back.');
+E('pushup', 'Push-ups', 'reps', 'upper', 'chest,triceps,shoulders,core', 2, 4.5, [6, 14], ['highplank', 'pushup_dn'], 'Hands under shoulders, body straight. Lower your chest toward the floor and press up. Drop to your knees any time.');
+E('pike_pushup', 'Pike push-ups', 'reps', 'upper', 'shoulders,triceps', 3, 4.5, [6, 10], ['pike', 'pike_b'], 'Hips high in an upside-down V. Bend your elbows to lower your head toward the floor, then press up.');
+E('shoulder_taps', 'Plank shoulder taps', 'reps', 'core', 'abs,shoulders,obliques', 2, 4, [12, 20], ['highplank', 'shtap'], 'High plank, feet wide. Tap each hand to the opposite shoulder without rocking your hips.');
+// ---- Added: back ----
+E('superman', 'Superman', 'reps', 'back', 'lower back,glutes,upper back', 1, 3, [10, 16], ['prone', 'superman'], 'Lie face down, arms forward. Lift your arms, chest and legs off the floor, pause, lower.');
+E('snow_angel', 'Reverse snow angels', 'reps', 'back', 'upper back,shoulders', 1, 3, [10, 14], ['prone_t', 'prone_y'], 'Face down, arms hovering by your sides. Sweep them overhead and back in a wide arc.');
+E('prone_yt', 'Prone Y-T raises', 'reps', 'back', 'upper back,rear shoulders', 1, 3, [10, 14], ['prone_t', 'prone_y'], 'Face down. Lift your arms into a Y, lower, then into a T. Thumbs up, squeeze your shoulder blades.');
+// ---- Added: core variety ----
+E('hollow_hold', 'Hollow hold', 'time', 'core', 'abs,deep core', 3, 4, [15, 30], ['hollow', 'hollow_b'], 'On your back, press your lower back down and lift your shoulders and legs a little. Hold. Bend your knees to make it easier.');
+E('flutter_kicks', 'Flutter kicks', 'time', 'core', 'lower abs,hip flexors', 2, 4, [20, 30], ['flutter', 'flutter_b'], 'On your back, legs low and straight. Kick them up and down in small, quick movements.');
+E('reverse_crunch', 'Reverse crunch', 'reps', 'core', 'lower abs', 1, 3.8, [10, 16], ['tabletop', 'revcrunch'], 'On your back, knees bent in the air. Curl your hips off the floor, bringing your knees to your chest. Lower slowly.');
+E('plank_jacks', 'Plank jacks', 'time', 'core', 'abs,shoulders,calves', 2, 7, [20, 30], ['highplank', 'plankjack'], 'High plank. Jump your feet wide and back together, hips steady.', { hi: true, alt: 'shoulder_taps' });
+E('squat_thrust', 'Squat thrusts', 'reps', 'full', 'full body,core,legs', 3, 8, [6, 10], ['squatdown', 'highplank'], 'Squat, hands to the floor, jump or step back to a plank, return and stand.', { hi: true, alt: 'squat' });
+E('v_ups', 'V-ups', 'reps', 'core', 'abs,hip flexors', 3, 4.5, [6, 12], ['hollow', 'vup'], 'From a hollow position, lift your arms and legs to meet above your hips. Bend your knees to make it easier.');
+// ---- Added: mobility and stretches ----
+E('childs_pose', 'Child\'s pose', 'time', 'stretch', 'lower back,shoulders,hips', 1, 2.3, [30, 30], ['childs', 'childs_b'], 'Kneel, sit back toward your heels and reach your arms forward. Breathe slowly.');
+E('cat_cow', 'Cat-cow', 'time', 'mobility', 'spine,lower back', 1, 2.5, [30, 30], ['cat', 'cow'], 'On hands and knees, round your back up, then let it dip as you look forward. Move with your breath.');
+E('hip_flexor_l', 'Hip flexor stretch left', 'time', 'stretch', 'hip flexors,quadriceps', 1, 2.3, [30, 30], ['kneellunge', 'kneellunge_b'], 'Half-kneel with your left knee down. Tuck your hips under and shift gently forward.', side('Hip flexor stretch', 'left'));
+E('hip_flexor_r', 'Hip flexor stretch right', 'time', 'stretch', 'hip flexors,quadriceps', 1, 2.3, [30, 30], ['kneellunge', 'kneellunge_b'], 'Half-kneel with your right knee down. Tuck your hips under and shift gently forward.', side('Hip flexor stretch', 'right'));
+E('hamstring_stretch', 'Hamstring stretch', 'time', 'stretch', 'hamstrings,lower back', 1, 2.3, [30, 30], ['seated', 'seated_reach'], 'Sit with your legs straight. Hinge forward from the hips toward your toes. Easy, no bouncing.');
+E('shoulder_stretch_l', 'Shoulder stretch left', 'time', 'stretch', 'shoulders,upper back', 1, 2.3, [20, 30], ['front', 'xbody'], 'Bring your left arm across your chest and hold it in place with your other hand.', side('Shoulder stretch', 'left'));
+E('shoulder_stretch_r', 'Shoulder stretch right', 'time', 'stretch', 'shoulders,upper back', 1, 2.3, [20, 30], ['front', 'xbody'], 'Bring your right arm across your chest and hold it in place with your other hand.', side('Shoulder stretch', 'right'));
+// ---- Added: dumbbells ----
+const DB = { equip: 'db', tempo: 3 };
+E('db_goblet_squat', 'Goblet squat', 'reps', 'strength', 'quadriceps,glutes,core', 1, 5, [8, 12], ['goblet', 'goblet_dn'], 'Hold one dumbbell at your chest. Squat down between your knees, chest up, then stand.', DB);
+E('db_row', 'Dumbbell row', 'reps', 'strength', 'upper back,lats,biceps', 1, 5, [8, 12], ['hinge', 'hinge_row'], 'Hinge forward with a flat back, dumbbells hanging. Pull them to your ribs, lower slowly.', DB);
+E('db_floor_press', 'Floor press', 'reps', 'strength', 'chest,triceps,shoulders', 1, 5, [8, 12], ['press_dn', 'press_up'], 'On your back, knees bent. Lower the dumbbells until your elbows touch the floor, then press up.', DB);
+E('db_rdl', 'Romanian deadlift', 'reps', 'strength', 'hamstrings,glutes,lower back', 1, 5, [8, 12], ['dbstand', 'rdl'], 'Dumbbells in front of your thighs. Push your hips back with soft knees until you feel your hamstrings, then stand tall.', DB);
+E('db_ohp', 'Overhead press', 'reps', 'strength', 'shoulders,triceps', 1, 5, [8, 12], ['ohp', 'ohp_up'], 'Dumbbells at shoulder height. Press overhead without arching your back, lower with control.', DB);
+E('db_reverse_lunge', 'Dumbbell reverse lunge', 'reps', 'strength', 'glutes,quadriceps', 1, 5, [8, 12], ['dbstand', 'dblunge'], 'Dumbbells at your sides. Step back into a lunge, then drive through your front heel to stand. Alternate legs.', DB);
+E('db_curl', 'Dumbbell curl', 'reps', 'strength', 'biceps,forearms', 1, 4, [8, 12], ['dbstand', 'curl'], 'Elbows by your sides. Curl the dumbbells up, lower slowly. No swinging.', DB);
+E('db_triceps', 'Triceps extension', 'reps', 'strength', 'triceps', 1, 4, [8, 12], ['tri_dn', 'tri_up'], 'Hold one dumbbell overhead with both hands. Lower it behind your head, then straighten your arms.', DB);
+E('db_farmer', 'Farmer hold', 'time', 'strength', 'grip,shoulders,core', 1, 4, [30, 45], ['dbstand', 'dbstand_b'], 'Stand tall holding the dumbbells at your sides. Shoulders back, brace, breathe.', DB);
+
+/* ---- Stick-figure poses (viewBox 0 0 120 100, ground at y=92) ----
+   Joints: h head, n neck, p pelvis, e1/w1 near elbow/wrist, e2/w2 far elbow/wrist,
+   k1/f1 near knee/foot, k2/f2 far knee/foot. Poses can extend another pose. */
+const POSE_DEF = {
+  stand: { h: [60, 16], n: [60, 27], p: [60, 55], e1: [61, 41], w1: [62, 54], e2: [59, 41], w2: [58, 54], k1: [61, 73], f1: [60, 91], k2: [59, 73], f2: [60, 91] },
+  front: { h: [60, 16], n: [60, 27], p: [60, 55], e1: [52, 40], w1: [50, 53], e2: [68, 40], w2: [70, 53], k1: [56, 73], f1: [55, 91], k2: [64, 73], f2: [65, 91] },
+  stepout: ['front', { e1: [47, 30], w1: [40, 20], e2: [73, 30], w2: [80, 20], k2: [69, 73], f2: [78, 91] }],
+  jack: ['front', { e1: [50, 16], w1: [46, 4], e2: [70, 16], w2: [74, 4], k1: [50, 73], f1: [42, 91], k2: [70, 73], f2: [78, 91] }],
+  handshead: ['front', { e1: [46, 20], w1: [56, 14], e2: [74, 20], w2: [64, 14] }],
+  kneetwist: ['front', { e1: [50, 22], w1: [57, 14], e2: [64, 46], w2: [64, 22], k1: [64, 60], f1: [58, 77] }],
+  tee: ['front', { e1: [45, 29], w1: [30, 29], e2: [75, 29], w2: [90, 29] }],
+  tee_b: ['front', { e1: [45, 27], w1: [31, 22], e2: [75, 27], w2: [89, 22] }],
+  sumo: ['front', { h: [60, 30], n: [60, 41], p: [60, 66], e1: [52, 54], w1: [58, 49], e2: [68, 54], w2: [62, 49], k1: [44, 72], f1: [42, 91], k2: [76, 72], f2: [78, 91] }],
+  skate: ['front', { h: [49, 20], n: [51, 31], p: [55, 58], e1: [60, 42], w1: [67, 50], e2: [42, 38], w2: [35, 46], k1: [51, 75], f1: [50, 91], k2: [57, 77], f2: [44, 88] }],
+  skate_b: { h: [71, 20], n: [69, 31], p: [65, 58], e1: [60, 42], w1: [53, 50], e2: [78, 38], w2: [85, 46], k1: [69, 75], f1: [70, 91], k2: [63, 77], f2: [76, 88] },
+  xbody: ['front', { e1: [62, 38], w1: [74, 35], e2: [70, 42], w2: [66, 36] }],
+  ohp: ['front', { e1: [46, 37], w1: [46, 25], e2: [74, 37], w2: [74, 25] }],
+  ohp_up: ['front', { e1: [50, 15], w1: [52, 4], e2: [70, 15], w2: [68, 4] }],
+  tri_dn: ['front', { e1: [54, 11], w1: [60, 25], e2: [66, 11], w2: [60, 25] }],
+  tri_up: ['front', { e1: [56, 14], w1: [60, 3], e2: [64, 14], w2: [60, 3] }],
+  dbstand: ['stand', {}],
+  dbstand_b: ['stand', { h: [60, 17], n: [60, 28] }],
+  hipsstand: ['stand', { e1: [66, 44], w1: [61, 55], e2: [54, 44], w2: [59, 55] }],
+  curl: ['stand', { w1: [70, 30], w2: [68, 30] }],
+  march: ['stand', { k1: [70, 62], f1: [69, 79], e1: [54, 40], w1: [52, 52], e2: [66, 40], w2: [71, 49] }],
+  highknee: ['stand', { k1: [74, 56], f1: [72, 74], e1: [52, 38], w1: [48, 48], e2: [69, 38], w2: [76, 30] }],
+  buttkick: ['stand', { k1: [60, 74], f1: [47, 64], e1: [66, 40], w1: [70, 50], e2: [54, 40], w2: [50, 50] }],
+  skip: ['stand', { h: [60, 12], n: [60, 23], p: [60, 51], e1: [53, 38], w1: [56, 50], e2: [67, 38], w2: [64, 50], k1: [62, 69], f1: [60, 84], k2: [58, 69], f2: [60, 88] }],
+  skip_b: ['skip', { k1: [58, 69], f1: [60, 88], k2: [62, 69], f2: [60, 84] }],
+  box: ['stand', { e1: [68, 32], w1: [82, 30], e2: [64, 38], w2: [68, 30] }],
+  box_b: ['stand', { e1: [64, 38], w1: [68, 30], e2: [68, 32], w2: [82, 30] }],
+  squat: ['stand', { h: [70, 38], n: [66, 48], p: [46, 68], e1: [74, 50], w1: [86, 50], e2: [72, 50], w2: [84, 50], k1: [66, 70], f1: [60, 91], k2: [64, 70], f2: [58, 91] }],
+  goblet: ['stand', { e1: [64, 41], w1: [66, 33], e2: [62, 41], w2: [66, 33] }],
+  goblet_dn: ['squat', { e1: [72, 58], w1: [74, 50], e2: [70, 58], w2: [74, 50] }],
+  lunge: ['hipsstand', { h: [59, 25], n: [58, 36], p: [56, 63], e1: [64, 49], w1: [60, 60], e2: [52, 49], w2: [56, 60], k1: [74, 72], f1: [74, 91], k2: [46, 86], f2: [32, 90] }],
+  dblunge: ['lunge', { e1: [59, 50], w1: [60, 64], e2: [57, 50], w2: [58, 64] }],
+  tiptoe: ['stand', { h: [60, 12], n: [60, 23], p: [60, 51], e1: [61, 37], w1: [62, 50], e2: [59, 37], w2: [58, 50], k1: [61, 69], f1: [61, 87], k2: [59, 69], f2: [61, 87] }],
+  wallsit: { h: [42, 30], n: [42, 41], p: [42, 66], e1: [48, 54], w1: [58, 62], e2: [46, 54], w2: [56, 62], k1: [66, 66], f1: [66, 91], k2: [64, 66], f2: [64, 91] },
+  wallsit_b: ['wallsit', { h: [42, 31] }],
+  fold: { h: [70, 82], n: [66, 72], p: [56, 52], e1: [68, 82], w1: [70, 91], e2: [66, 82], w2: [68, 91], k1: [57, 72], f1: [56, 91], k2: [55, 72], f2: [56, 91] },
+  squatdown: { h: [74, 56], n: [68, 62], p: [50, 72], e1: [72, 78], w1: [74, 91], e2: [70, 78], w2: [72, 91], k1: [70, 70], f1: [60, 91], k2: [68, 70], f2: [58, 91] },
+  hinge: { h: [82, 33], n: [74, 38], p: [52, 54], e1: [74, 52], w1: [74, 65], e2: [72, 52], w2: [72, 65], k1: [58, 72], f1: [56, 91], k2: [56, 72], f2: [54, 91] },
+  hinge_row: ['hinge', { e1: [64, 40], w1: [70, 51], e2: [62, 40], w2: [68, 51] }],
+  rdl: { h: [86, 42], n: [78, 46], p: [52, 54], e1: [78, 60], w1: [76, 74], e2: [76, 60], w2: [74, 74], k1: [58, 72], f1: [56, 91], k2: [56, 72], f2: [54, 91] },
+  // Floor, on the back (head left)
+  lying: { h: [18, 83], n: [28, 86], p: [58, 87], e1: [42, 88], w1: [54, 89], e2: [42, 88], w2: [54, 89], k1: [78, 88], f1: [98, 89], k2: [78, 88], f2: [98, 89] },
+  bridge: ['lying', { k1: [74, 68], f1: [86, 89], k2: [72, 68], f2: [84, 89] }],
+  bridge_up: ['bridge', { p: [58, 72], e1: [38, 88], w1: [48, 89], e2: [38, 88], w2: [48, 89] }],
+  bridge_march: ['bridge_up', { k1: [68, 56], f1: [80, 52] }],
+  slbridge: ['bridge_up', { k1: [78, 64], f1: [96, 57] }],
+  crunch: ['bridge', { e1: [18, 74], w1: [23, 80], e2: [18, 74], w2: [23, 80] }],
+  crunch_up: ['crunch', { h: [34, 64], n: [39, 73], e1: [29, 65], w1: [33, 61], e2: [29, 65], w2: [33, 61] }],
+  crossover: ['crunch_up', { h: [38, 62], n: [41, 72], e1: [53, 66], w1: [40, 60], k2: [70, 67], f2: [79, 63] }],
+  situp: ['crunch', { h: [58, 49], n: [56, 59], e1: [64, 66], w1: [74, 66], e2: [64, 66], w2: [74, 66] }],
+  heeltouch: ['crunch', { h: [26, 75], n: [32, 80], e1: [44, 83], w1: [56, 85], e2: [44, 83], w2: [56, 85] }],
+  heeltouch2: ['heeltouch', { n: [34, 78], e1: [52, 83], w1: [66, 86] }],
+  tabletop: ['lying', { k1: [60, 70], f1: [76, 70], k2: [58, 70], f2: [74, 70] }],
+  toetap: ['tabletop', { k1: [66, 74], f1: [78, 89] }],
+  tabletop_twist: ['tabletop', { k1: [62, 77], f1: [78, 79], k2: [60, 77], f2: [76, 79] }],
+  revcrunch: ['lying', { p: [54, 80], k1: [48, 62], f1: [62, 63], k2: [46, 62], f2: [60, 63] }],
+  legraise: ['lying', { k1: [61, 67], f1: [62, 47], k2: [60, 67], f2: [61, 47] }],
+  legdrop: ['legraise', { k1: [78, 81], f1: [98, 85] }],
+  kneeshug: ['lying', { k1: [44, 66], f1: [56, 73], k2: [42, 66], f2: [54, 73], e1: [36, 74], w1: [45, 68], e2: [36, 74], w2: [45, 68] }],
+  kneeshug_b: ['kneeshug', { h: [20, 81], k1: [46, 65], k2: [44, 65] }],
+  deadbug: ['tabletop', { e1: [28, 72], w1: [28, 60], e2: [28, 72], w2: [28, 60] }],
+  deadbug2: ['deadbug', { e1: [17, 81], w1: [5, 83], k1: [76, 81], f1: [96, 83] }],
+  bike: ['crunch_up', { e1: [48, 66], w1: [36, 60], k1: [56, 66], f1: [70, 71], k2: [78, 81], f2: [98, 83] }],
+  bike_b: ['crunch_up', { e2: [48, 66], w2: [36, 60], k2: [56, 66], f2: [70, 71], k1: [78, 81], f1: [98, 83] }],
+  flutter: ['lying', { k1: [78, 83], f1: [98, 77], k2: [78, 86], f2: [98, 85] }],
+  flutter_b: ['lying', { k1: [78, 86], f1: [98, 85], k2: [78, 83], f2: [98, 77] }],
+  hollow: ['lying', { h: [22, 77], n: [30, 81], e1: [18, 77], w1: [6, 73], e2: [18, 77], w2: [6, 73], k1: [78, 83], f1: [98, 77], k2: [78, 83], f2: [98, 77] }],
+  hollow_b: ['hollow', { h: [22, 76], f1: [98, 76], f2: [98, 76] }],
+  vup: ['lying', { h: [44, 55], n: [48, 65], e1: [58, 57], w1: [70, 50], e2: [58, 57], w2: [70, 50], k1: [70, 64], f1: [78, 47], k2: [70, 64], f2: [78, 47] }],
+  twist: ['lying', { e1: [22, 90], w1: [8, 90], e2: [22, 90], w2: [8, 90], k1: [66, 75], f1: [80, 87], k2: [64, 77], f2: [78, 88] }],
+  twist_b: ['twist', { k1: [67, 77], k2: [65, 79] }],
+  press_dn: ['bridge', { e1: [20, 86], w1: [28, 77], e2: [20, 86], w2: [28, 77] }],
+  press_up: ['bridge', { e1: [28, 73], w1: [28, 60], e2: [28, 73], w2: [28, 60] }],
+  // Seated
+  seated: { h: [42, 48], n: [42, 58], p: [40, 87], e1: [46, 70], w1: [54, 80], e2: [46, 70], w2: [54, 80], k1: [68, 87], f1: [96, 87], k2: [68, 87], f2: [96, 87] },
+  seated_reach: ['seated', { h: [66, 59], n: [58, 64], e1: [72, 74], w1: [88, 82], e2: [72, 74], w2: [88, 82] }],
+  kick_in: { h: [34, 54], n: [38, 64], p: [50, 87], e1: [34, 77], w1: [30, 90], e2: [34, 77], w2: [30, 90], k1: [64, 66], f1: [78, 76], k2: [64, 66], f2: [78, 76] },
+  kick_out: ['kick_in', { h: [28, 60], n: [34, 68], k1: [74, 74], f1: [98, 70], k2: [74, 74], f2: [98, 70] }],
+  vsit: { h: [36, 52], n: [40, 62], p: [52, 87], e1: [52, 70], w1: [60, 66], e2: [52, 70], w2: [60, 66], k1: [68, 68], f1: [82, 76], k2: [68, 68], f2: [82, 76] },
+  vsit_b: ['vsit', { h: [37, 53], e1: [50, 74], w1: [58, 84], e2: [50, 74], w2: [58, 84] }],
+  recline: ['vsit', { f1: [82, 90], f2: [82, 90] }],
+  recline_b: ['vsit_b', { f1: [82, 90], f2: [82, 90] }],
+  // Face down
+  prone: { h: [22, 86], n: [30, 88], p: [58, 89], e1: [40, 89], w1: [50, 89], e2: [40, 89], w2: [50, 89], k1: [78, 90], f1: [98, 90], k2: [78, 90], f2: [98, 90] },
+  cobra: ['prone', { h: [26, 62], n: [34, 70], e1: [40, 81], w1: [34, 90], e2: [40, 81], w2: [34, 90] }],
+  superman: ['prone', { h: [20, 79], n: [30, 84], e1: [18, 80], w1: [6, 76], e2: [18, 80], w2: [6, 76], k1: [78, 86], f1: [98, 81], k2: [78, 86], f2: [98, 81] }],
+  prone_t: ['prone', { h: [22, 84], n: [30, 86], e1: [34, 80], w1: [36, 72], e2: [34, 80], w2: [36, 72] }],
+  prone_y: ['prone', { h: [22, 84], n: [30, 86], e1: [20, 82], w1: [8, 78], e2: [20, 82], w2: [8, 78] }],
+  // Hands and knees
+  allfours: { h: [28, 61], n: [36, 66], p: [66, 66], e1: [36, 78], w1: [36, 90], e2: [36, 78], w2: [36, 90], k1: [66, 90], f1: [84, 90], k2: [66, 90], f2: [84, 90] },
+  birddog: ['allfours', { e1: [20, 64], w1: [6, 62], k1: [82, 66], f1: [100, 64] }],
+  cat: ['allfours', { h: [30, 72], n: [36, 64], p: [66, 64] }],
+  cow: ['allfours', { h: [26, 58], n: [36, 69], p: [66, 68] }],
+  childs: { h: [34, 85], n: [42, 83], p: [72, 79], e1: [28, 88], w1: [14, 89], e2: [28, 88], w2: [14, 89], k1: [62, 90], f1: [86, 90], k2: [62, 90], f2: [86, 90] },
+  childs_b: ['childs', { n: [42, 82], h: [34, 84], w1: [12, 89], w2: [12, 89] }],
+  kneellunge: { h: [59, 29], n: [58, 40], p: [56, 66], e1: [64, 52], w1: [72, 64], e2: [62, 52], w2: [70, 64], k1: [74, 72], f1: [74, 91], k2: [44, 90], f2: [28, 90] },
+  kneellunge_b: ['kneellunge', { h: [61, 30], n: [60, 41], p: [59, 68] }],
+  // Planks
+  plank: { h: [92, 64], n: [84, 70], p: [54, 78], e1: [84, 90], w1: [98, 90], e2: [84, 90], w2: [98, 90], k1: [37, 83], f1: [20, 88], k2: [37, 83], f2: [20, 88] },
+  plank_b: ['plank', { p: [54, 77] }],
+  kneeplank: { h: [90, 64], n: [82, 70], p: [60, 78], e1: [82, 90], w1: [96, 90], e2: [82, 90], w2: [96, 90], k1: [42, 90], f1: [28, 80], k2: [42, 90], f2: [28, 80] },
+  kneeplank_b: ['kneeplank', { p: [60, 77] }],
+  highplank: { h: [90, 58], n: [82, 62], p: [52, 75], e1: [82, 76], w1: [82, 90], e2: [82, 76], w2: [82, 90], k1: [36, 81], f1: [20, 88], k2: [36, 81], f2: [20, 88] },
+  pushup_dn: { h: [92, 77], n: [84, 81], p: [52, 85], e1: [74, 81], w1: [82, 90], e2: [74, 81], w2: [82, 90], k1: [36, 87], f1: [20, 89], k2: [36, 87], f2: [20, 89] },
+  kneepush: { h: [88, 60], n: [80, 64], p: [56, 78], e1: [80, 77], w1: [80, 90], e2: [80, 77], w2: [80, 90], k1: [44, 90], f1: [30, 80], k2: [44, 90], f2: [30, 80] },
+  kneepush_b: ['kneepush', { h: [88, 78], n: [80, 81], p: [56, 85], e1: [72, 82], e2: [72, 82] }],
+  climb: ['highplank', { k1: [66, 77], f1: [60, 87] }],
+  climb_b: ['highplank', { k2: [66, 77], f2: [60, 87] }],
+  shtap: ['highplank', { e1: [88, 72], w1: [82, 64] }],
+  plankjack: ['highplank', { f1: [14, 88], f2: [26, 88], k1: [33, 81], k2: [39, 81] }],
+  pike: { h: [80, 80], n: [76, 70], p: [56, 46], e1: [78, 80], w1: [80, 90], e2: [78, 80], w2: [80, 90], k1: [46, 68], f1: [36, 90], k2: [46, 68], f2: [36, 90] },
+  pike_b: ['pike', { h: [80, 87], n: [76, 78], e1: [70, 84], e2: [70, 84] }],
+  sideplank: { h: [30, 54], n: [38, 61], p: [66, 74], e1: [38, 90], w1: [52, 90], e2: [50, 64], w2: [60, 70], k1: [79, 81], f1: [94, 88], k2: [79, 81], f2: [94, 88] },
+  sideplank_b: ['sideplank', { p: [66, 73] }],
+  sidebridge_dn: ['sideplank', { h: [30, 58], n: [38, 65], p: [64, 86], k1: [80, 88], k2: [80, 88] }],
+  tplank: ['sideplank', { n: [38, 62], h: [30, 55], e1: [38, 76], w1: [38, 90], e2: [38, 46], w2: [38, 30] }],
+};
+// Animation speed per area (seconds per A-B-A loop).
+const ART_SPEED = { cardio: 1, full: 2.4, stretch: 4, mobility: 3, strength: 2.6, default: 2 };
+
+/* ---- Seeded days from the original app (do not change) ---- */
+const R = (id, reps) => ({ id, reps });
+const T = (id, sec) => ({ id, sec });
+const SEED_DAYS = {
+  1: { template: 'A', kcal: 79, minutes: 11, steps: [
+    T('side_step_jacks', 30), R('standing_bicycle_crunch', 20), T('jumping_jacks', 30), T('inchworms', 30), R('dead_bug', 16),
+    R('heel_touch', 16), T('plank', 30), R('high_knee_twist', 20), R('bird_dog', 20), R('ab_crunch', 10), R('crossover_crunch', 16),
+    T('knee_plank', 20), T('cobra_stretch', 20), T('lying_twist_l', 20), T('lying_twist_r', 20)] },
+  2: { template: 'B', kcal: 59, minutes: 10, steps: [
+    T('kick_crunch', 30), T('jumping_jacks', 30), R('ab_crunch', 10), R('russian_twist', 12), R('toe_tap', 16), R('leg_raise', 5),
+    R('butt_bridge', 15), R('crossover_crunch', 10), R('russian_twist', 12), R('bent_leg_twist', 16), R('single_leg_drop', 8),
+    R('butt_bridge', 15), T('knees_to_chest', 20), T('lumbar_twist_l', 20), T('lumbar_twist_r', 20)] },
+  3: { template: 'C', kcal: 84, minutes: 9, steps: [
+    T('skipping', 30), T('jumping_jacks', 30), T('inchworms', 30), R('ab_crunch', 12), R('single_leg_drop', 12), T('plank', 30),
+    R('reclined_oblique_twist', 10), R('mountain_climber', 22), R('dead_bug', 12), R('leg_raise', 8), T('slow_mountain_climber', 30),
+    R('oblique_crunch_reach', 10), T('cobra_stretch', 20), T('lying_twist_l', 20), T('lying_twist_r', 20)] },
+  30: { template: 'F', kcal: 159, minutes: 23, steps: [
+    T('high_stepping', 20), T('jumping_jacks', 30),
+    ...[1, 2].flatMap((round) => [R('sit_up', 20), R('ab_crunch', 22), R('leg_raise', 22), T('plank', 60), R('side_bridge_r', 22),
+      R('side_bridge_l', 22), R('bicycle_crunch', 20)].map((s) => Object.assign(s, { group: 'Circuit', round, rounds: 2 }))),
+    R('t_plank_l', 6), R('t_plank_r', 6), T('side_plank_r', 30), T('side_plank_l', 30),
+    T('cobra_stretch', 30), T('lying_twist_l', 30), T('lying_twist_r', 30)] },
+};
+
+/* ---- Bodyweight templates. Index = stage (0 early, 1 mid, 2 late, 3 advanced).
+   core pools are in priority order; [a, b] pairs (left/right) are always kept together. ---- */
+const TEMPLATES = {
+  A: { title: 'Cardio & core',
+    warm: [['side_step_jacks', 'standing_bicycle_crunch', 'jumping_jacks', 'inchworms'], ['side_step_jacks', 'jumping_jacks', 'high_knee_twist', 'inchworms'],
+      ['high_stepping', 'jumping_jacks', 'inchworms'], ['high_stepping', 'jumping_jacks', 'skater_hops']],
+    core: [
+      ['dead_bug', 'heel_touch', 'plank', 'high_knee_twist', 'bird_dog', 'ab_crunch', 'crossover_crunch', 'knee_plank', 'squat', 'knee_pushup', 'superman', 'glute_bridge_march', 'calf_raise'],
+      ['dead_bug', 'heel_touch', 'plank', 'bird_dog', 'sit_up', 'crossover_crunch', 'squat', 'knee_pushup', 'superman', 'shoulder_taps', 'reverse_crunch', 'calf_raise', 'glute_bridge_march'],
+      ['sit_up', 'ab_crunch', 'bicycle_crunch', 'plank', ['side_plank_r', 'side_plank_l'], 'squat', 'incline_pushup', 'snow_angel', 'reverse_lunge', 'heel_touch', 'dead_bug', 'calf_raise'],
+      ['sit_up', 'bicycle_crunch', 'leg_raise', 'plank', ['t_plank_l', 't_plank_r'], 'pushup', 'reverse_lunge', 'superman', 'hollow_hold', 'squat', 'shoulder_taps', 'calf_raise']],
+    cool: [['cobra_stretch', 'lying_twist_l', 'lying_twist_r'], ['cobra_stretch', 'lying_twist_l', 'lying_twist_r'],
+      ['cobra_stretch', 'lying_twist_l', 'lying_twist_r'], ['cobra_stretch', 'hip_flexor_l', 'hip_flexor_r']] },
+  B: { title: 'Mat core',
+    warm: [['kick_crunch', 'jumping_jacks'], ['march', 'jumping_jacks', 'arm_circles'], ['march', 'jumping_jacks', 'arm_circles'], ['butt_kicks', 'jumping_jacks', 'arm_circles']],
+    core: [
+      ['ab_crunch', 'russian_twist', 'toe_tap', 'leg_raise', 'butt_bridge', 'crossover_crunch', 'bent_leg_twist', 'single_leg_drop', 'flutter_kicks', 'glute_bridge_march', 'superman', 'reverse_crunch', 'sumo_squat'],
+      ['ab_crunch', 'russian_twist', 'leg_raise', 'butt_bridge', 'toe_tap', 'single_leg_drop', 'bent_leg_twist', 'reverse_crunch', 'flutter_kicks', 'prone_yt', 'sumo_squat', 'knee_pushup', 'glute_bridge_march'],
+      ['sit_up', 'russian_twist', 'leg_raise', ['single_leg_bridge_l', 'single_leg_bridge_r'], 'bicycle_crunch', 'flutter_kicks', 'reverse_crunch', 'prone_yt', 'sumo_squat', 'incline_pushup', 'toe_tap', 'superman'],
+      ['sit_up', 'leg_raise', 'russian_twist', 'v_ups', ['single_leg_bridge_l', 'single_leg_bridge_r'], 'hollow_hold', 'flutter_kicks', 'pike_pushup', 'sumo_squat', 'snow_angel', 'bicycle_crunch', 'reverse_crunch']],
+    cool: [['knees_to_chest', 'lumbar_twist_l', 'lumbar_twist_r'], ['knees_to_chest', 'lumbar_twist_l', 'lumbar_twist_r'],
+      ['childs_pose', 'lumbar_twist_l', 'lumbar_twist_r'], ['childs_pose', 'hamstring_stretch', 'knees_to_chest']] },
+  C: { title: 'Cardio & planks',
+    warm: [['skipping', 'jumping_jacks', 'inchworms'], ['skipping', 'jumping_jacks', 'inchworms'], ['skipping', 'jumping_jacks', 'butt_kicks'], ['skipping', 'shadow_boxing', 'skater_hops']],
+    core: [
+      ['ab_crunch', 'single_leg_drop', 'plank', 'reclined_oblique_twist', 'mountain_climber', 'dead_bug', 'leg_raise', 'slow_mountain_climber', 'oblique_crunch_reach', 'shadow_boxing', 'squat', 'knee_pushup', 'cat_cow'],
+      ['ab_crunch', 'plank', 'mountain_climber', 'reclined_oblique_twist', 'leg_raise', 'slow_mountain_climber', 'oblique_crunch_reach', 'shadow_boxing', 'squat', 'shoulder_taps', 'superman', 'wall_sit', 'knee_pushup'],
+      ['sit_up', 'plank', 'mountain_climber', ['side_plank_r', 'side_plank_l'], 'leg_raise', 'oblique_crunch_reach', 'plank_jacks', 'reverse_lunge', 'incline_pushup', 'wall_sit', 'shadow_boxing', 'superman'],
+      ['sit_up', 'plank', 'mountain_climber', ['t_plank_l', 't_plank_r'], 'leg_raise', 'squat_thrust', 'plank_jacks', 'pushup', 'wall_sit', 'hollow_hold', 'skater_hops', 'superman']],
+    cool: [['cobra_stretch', 'lying_twist_l', 'lying_twist_r'], ['cobra_stretch', 'lying_twist_l', 'lying_twist_r'],
+      ['cobra_stretch', 'hip_flexor_l', 'hip_flexor_r'], ['childs_pose', 'hip_flexor_l', 'hip_flexor_r']] },
+  // Cycle finale (day 30 from cycle 2 on), shaped like the seeded day 30.
+  F: { title: 'Cycle finale',
+    warm: [null, null, null, ['high_stepping', 'jumping_jacks']],
+    core: [null, null, null, ['sit_up', 'ab_crunch', 'leg_raise', 'plank', ['side_bridge_r', 'side_bridge_l'], 'bicycle_crunch', 'pushup', 'squat',
+      ['t_plank_l', 't_plank_r'], ['side_plank_r', 'side_plank_l'], 'v_ups', 'reverse_lunge']],
+    cool: [null, null, null, ['cobra_stretch', 'lying_twist_l', 'lying_twist_r']] },
+};
+
+/* ---- Dumbbell strength sessions (cycle 2 on) and cycle-1 finishers ---- */
+const DB_TEMPLATES = {
+  A: { title: 'Strength A · squat & press', warm: ['march', 'arm_circles', 'squat'],
+    main: ['db_goblet_squat', 'db_floor_press', 'db_reverse_lunge', 'db_ohp', 'db_triceps'], extra: 'db_row', // extra: added in strength focus
+    finisher: ['plank', ['side_plank_r', 'side_plank_l']], cool: ['childs_pose', 'hip_flexor_l', 'hip_flexor_r'] },
+  B: { title: 'Strength B · hinge & pull', warm: ['march', 'arm_circles', 'glute_bridge_march'],
+    main: ['db_rdl', 'db_row', 'db_goblet_squat', 'db_curl', 'db_farmer'], extra: 'db_floor_press',
+    finisher: ['bird_dog', 'russian_twist', 'hollow_hold'], cool: ['hamstring_stretch', 'shoulder_stretch_l', 'shoulder_stretch_r'] },
+};
+const C1_FINISHERS = [['db_goblet_squat', 'db_row'], ['db_floor_press', 'db_rdl'], ['db_ohp', 'db_reverse_lunge']];
+const C1_FINISHER_FROM_DAY = 9;
+
+/* ---- Cycles. count = exercise steps [start, end]. dose = multiplier of the cycle-1 end dose [start, end].
+   restScale shortens rests. dbSets = rounds of the dumbbell circuit [first half, second half]. ---- */
+const CYCLES = [
+  { n: 1, level: 'Beginner', count: [15, 23], dose: null, restScale: 1, vrMin: 25, dbSets: [2, 2] }, // cycle-1 strength days only with strength focus
+  { n: 2, level: 'Intermediate', count: [19, 25], dose: [0.85, 1.05], restScale: 0.8, vrMin: 30, dbSets: [2, 3] },
+  { n: 3, level: 'Advanced', count: [21, 27], dose: [0.95, 1.15], restScale: 0.7, vrMin: 35, dbSets: [3, 3] },
+  { n: 4, level: 'Peak', count: [23, 29], dose: [1.0, 1.25], restScale: 0.6, vrMin: 40, dbSets: [3, 4] },
+];
+// Games you can log on a "VR / game" day. Add more here (and a MET default in defaultSettings().vrMet).
+const VR_GAMES = [
+  { id: 'beatsaber', name: 'Beat Saber', kind: 'VR · cardio' },
+  { id: 'bodycombat', name: 'Les Mills Body Combat', kind: 'VR · cardio + strength-endurance' },
+  { id: 'justdance', name: 'Just Dance', kind: 'Switch · cardio' },
+  { id: 'ringfit', name: 'Ring Fit Adventure', kind: 'Switch · cardio + strength' },
+];
+
+/* =====================================================================
+   LOGIC (pure functions, no DOM). Tested by tests/run-tests.js.
+   ===================================================================== */
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const round2 = (v) => Math.max(2, Math.round(v / 2) * 2);
+const round5 = (v) => Math.max(5, Math.round(v / 5) * 5);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+/* ---------- Dates: 'YYYY-MM-DD' strings, arithmetic in UTC days (no DST surprises) ---------- */
+const DateX = {
+  re: /^\d{4}-\d{2}-\d{2}$/,
+  valid(s) { if (typeof s !== 'string' || !DateX.re.test(s)) return false; const n = DateX.num(s); return DateX.str(n) === s; },
+  num(s) { const [y, m, d] = s.split('-').map(Number); return Math.round(Date.UTC(y, m - 1, d) / 864e5); },
+  str(n) { return new Date(n * 864e5).toISOString().slice(0, 10); },
+  add(s, k) { return DateX.str(DateX.num(s) + k); },
+  diff(a, b) { return DateX.num(b) - DateX.num(a); },
+  today(now) { const d = now || new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; },
+  dow(s) { return new Date(DateX.num(s) * 864e5).getUTCDay(); }, // 0 = Sunday
+  mondayOf(s) { return DateX.add(s, -((DateX.dow(s) + 6) % 7)); },
+  pretty(s, opts) {
+    return new Date(DateX.num(s) * 864e5).toLocaleDateString(undefined, Object.assign({ timeZone: 'UTC', day: 'numeric', month: 'short' }, opts || {}));
+  },
+};
+
+/* ---------- Poses and stick-figure SVG ---------- */
+const JOINTS = ['h', 'n', 'p', 'e1', 'w1', 'e2', 'w2', 'k1', 'f1', 'k2', 'f2'];
+const POSES = {};
+function resolvePose(name, seen) {
+  if (POSES[name]) return POSES[name];
+  const def = POSE_DEF[name];
+  if (!def) return null;
+  seen = seen || {};
+  if (seen[name]) throw new Error('Pose cycle: ' + name);
+  seen[name] = true;
+  let out;
+  if (Array.isArray(def)) { const base = resolvePose(def[0], seen); out = Object.assign({}, base, def[1]); } else out = Object.assign({}, def);
+  JOINTS.forEach((j) => { if (!out[j]) throw new Error('Pose ' + name + ' missing ' + j); });
+  return (POSES[name] = out);
+}
+function figureSVG(exId, opts) {
+  opts = opts || {};
+  const ex = LIBRARY[exId];
+  if (!ex || !ex.pose) return null;
+  let A = resolvePose(ex.pose[0]), B = resolvePose(ex.pose[1] || ex.pose[0]);
+  if (!A || !B) return null;
+  if (opts.animate === false) A = B; // static thumbnails show the end position, which reads better
+  const mir = ex.mirror ? ' transform="translate(120,0) scale(-1,1)"' : '';
+  const dur = (ART_SPEED[ex.area] || ART_SPEED.default) * (ex.id.startsWith('slow') ? 1.8 : 1);
+  const pts = (P, list) => list.map((j) => P[j].join(',')).join(' ');
+  const limbs = [['far', ['n', 'e2', 'w2']], ['far', ['p', 'k2', 'f2']], ['', ['n', 'p']], ['', ['p', 'k1', 'f1']], ['', ['n', 'e1', 'w1']]];
+  const anim = opts.animate !== false;
+  const a = (attr, va, vb) => anim && va !== vb
+    ? `<animate attributeName="${attr}" values="${va};${vb};${va}" dur="${dur}s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines=".45 0 .55 1;.45 0 .55 1"/>` : '';
+  let body = '';
+  limbs.forEach(([cls, list]) => {
+    const pa = pts(A, list), pb = pts(B, list);
+    body += `<polyline class="body"${cls ? ' opacity=".5"' : ''} points="${pa}">${a('points', pa, pb)}</polyline>`;
+  });
+  body += `<circle class="head" r="6.5" cx="${A.h[0]}" cy="${A.h[1]}">${a('cx', A.h[0], B.h[0])}${a('cy', A.h[1], B.h[1])}</circle>`;
+  if (ex.equip === 'db') {
+    ['w1', 'w2'].forEach((w) => {
+      const [x1, y1] = A[w], [x2, y2] = B[w];
+      body += `<line class="db" x1="${x1 - 4}" y1="${y1}" x2="${x1 + 4}" y2="${y1}">${a('x1', x1 - 4, x2 - 4)}${a('x2', x1 + 4, x2 + 4)}${a('y1', y1, y2)}${a('y2', y1, y2)}</line>`;
+    });
+  }
+  const label = esc(ex.name) + ' illustration';
+  return `<svg class="figsvg" viewBox="0 0 120 100" role="img" aria-label="${label}"><line class="ground" x1="4" y1="92.5" x2="116" y2="92.5"/><g${mir}>${body}</g></svg>`;
+}
+
+/* ---------- Plan generation (pure) ---------- */
+function cycleCfg(c) { return CYCLES[Math.min(c, CYCLES.length) - 1]; }
+function levelName(c) { return c > CYCLES.length ? cycleCfg(c).level + ' (repeat)' : cycleCfg(c).level; }
+function stageFor(c, g) { if (c === 1) return g < 1 / 3 ? 0 : g < 2 / 3 ? 1 : 2; if (c === 2) return g < 0.5 ? 2 : 3; return 3; }
+function roundsFor(c, g) { if (c === 1) return g >= 0.45 ? 2 : 1; if (c === 2) return 2; if (c === 3) return g < 0.5 ? 2 : 3; return 3; }
+
+// Slot type for a day of a cycle (1..31).
+//  Block of 4: workout, VR / game, workout (cycle 1) / strength (cycle 2+), rest. Day 30 = finale, day 31 = cycle break.
+//  focus 'strength' (chosen when starting a new phase): every block still has a core day and a VR / game day;
+//  the third slot is strength from cycle 1, and strength sessions are bigger (extra set, extra move, 6-10 heavier reps).
+const FOCUSES = { balanced: 'Balanced (core first)', strength: 'Strength (bigger dumbbell days)' };
+function slotType(c, day, focus) {
+  if (day === 31 || day % 4 === 0) return 'rest';
+  if (day === 30) return 'finale';
+  if (c === 1 && day <= 3) return 'seed';
+  const pos = (day - 1) % 4;
+  if (pos === 1 && day !== 29) return 'vr';
+  if (pos === 2 && (c >= 2 || focus === 'strength')) return 'db';
+  return 'workout';
+}
+// Rep range for strength moves, and the reps that mean "time to go heavier".
+function strengthReps(focus) { return focus === 'strength' ? { lo: 6, hi: 10 } : { lo: 8, hi: 12 }; }
+
+function dose(id, c, g) {
+  const ex = LIBRARY[id];
+  if (!ex) throw new Error('Unknown exercise ' + id);
+  let v;
+  if (c === 1) v = lerp(ex.dose[0], ex.dose[1], g);
+  else { const k = cycleCfg(c).dose; v = ex.dose[1] * lerp(k[0], k[1], g); }
+  v = Math.min(v, ex.cap);
+  return ex.mode === 'reps' ? { id, reps: round2(v) } : { id, sec: round5(v) };
+}
+
+// Take up to n exercise ids from a pool, keeping [left, right] pairs together.
+function takeFromPool(pool, n, skip) {
+  const used = [], rest = [];
+  let left = n;
+  pool.forEach((item) => {
+    const ids = Array.isArray(item) ? item : [item];
+    if (skip && ids.some((id) => skip.includes(id))) return;
+    if (ids.length <= left) { used.push(...ids); left -= ids.length; } else rest.push(item);
+  });
+  return { used, rest };
+}
+
+function buildBodyweight(tplKey, c, g, finisher) {
+  const tpl = TEMPLATES[tplKey];
+  const st = tplKey === 'F' ? 3 : stageFor(c, g);
+  const R = roundsFor(c, g);
+  const cfg = cycleCfg(c);
+  const target = Math.round(lerp(cfg.count[0], cfg.count[1], g)) + (tplKey === 'F' ? 2 : 0);
+  const warm = tpl.warm[st], cool = tpl.cool[st], fin = finisher || [];
+  const avail = target - warm.length - cool.length - fin.length;
+  const per = R > 1 ? Math.floor(avail / R) : avail;
+  const circ = takeFromPool(tpl.core[st], per);
+  const post = takeFromPool(circ.rest, avail - circ.used.length * R);
+  const steps = warm.map((id) => dose(id, c, g));
+  for (let r = 1; r <= R; r++) {
+    circ.used.forEach((id) => steps.push(Object.assign(dose(id, c, g), R > 1 ? { group: 'Circuit', round: r, rounds: R } : {})));
+  }
+  post.used.forEach((id) => steps.push(dose(id, c, g)));
+  fin.forEach((id) => steps.push(Object.assign(dose(id, c, g), { group: 'Dumbbell finisher' })));
+  cool.forEach((id) => steps.push(dose(id, c, g)));
+  return steps;
+}
+
+function buildStrength(key, c, g, focus) {
+  const t = DB_TEMPLATES[key], cfg = cycleCfg(c), big = focus === 'strength', rr = strengthReps(focus);
+  const sets = (g < 0.5 ? cfg.dbSets[0] : cfg.dbSets[1]) + (big ? 1 : 0);
+  const main = big ? t.main.concat([t.extra]) : t.main;
+  const steps = t.warm.map((id) => dose(id, 1, 0.5));
+  for (let r = 1; r <= sets; r++) {
+    main.forEach((id) => {
+      const ex = LIBRARY[id];
+      const s = ex.mode === 'reps' ? { id, reps: round2(lerp(rr.lo, rr.hi, g)) } : { id, sec: round5(lerp(ex.dose[0], ex.dose[1], g)) };
+      steps.push(Object.assign(s, { group: 'Strength circuit', round: r, rounds: sets }));
+    });
+  }
+  takeFromPool(t.finisher, 9).used.forEach((id) => steps.push(Object.assign(dose(id, c, g), { group: 'Core finisher' })));
+  t.cool.forEach((id) => steps.push(dose(id, c, g)));
+  return steps;
+}
+
+const _cycleCache = {};
+function generateCycle(c, focus) {
+  focus = focus === 'strength' ? 'strength' : 'balanced';
+  const ck = c + ':' + focus;
+  if (_cycleCache[ck]) return _cycleCache[ck];
+  const cfg = cycleCfg(c);
+  const L = APP.cycleLen;
+  const types = []; for (let d = 1; d <= L; d++) types.push(slotType(c, d, focus));
+  const bwDays = []; types.forEach((t, i) => { if (t === 'workout' || t === 'seed' || t === 'finale') bwDays.push(i + 1); });
+  const Tn = bwDays.length - 1;
+  let rot = 0, dbRot = 0, finRot = 0;
+  const days = [];
+  for (let day = 1; day <= L; day++) {
+    const type = types[day - 1];
+    const key = `c${c}d${day}`;
+    const base = { key, cycle: c, day, focus, level: levelName(c), restScale: cfg.restScale };
+    if (type === 'rest') {
+      days.push(Object.assign(base, { type: 'rest', title: day === 31 ? 'Cycle break' : 'Rest day', steps: [] }));
+      continue;
+    }
+    if (type === 'vr') {
+      const g = (day - 1) / 29;
+      days.push(Object.assign(base, { type: 'vr', title: 'VR / game session', targetMin: cfg.vrMin, g, fallbackTemplate: 'C', steps: [] }));
+      continue;
+    }
+    if (type === 'db') {
+      const g = (day - 1) / 29;
+      const k = dbRot++ % 2 === 0 ? 'A' : 'B';
+      days.push(Object.assign(base, { type: 'db', template: 'DB' + k, title: DB_TEMPLATES[k].title, g, steps: buildStrength(k, c, g, focus) }));
+      continue;
+    }
+    const g = Tn ? bwDays.indexOf(day) / Tn : 0;
+    if (c === 1 && SEED_DAYS[day] && (type === 'seed' || type === 'finale')) {
+      const sd = SEED_DAYS[day];
+      days.push(Object.assign(base, { type: 'workout', template: sd.template, title: day === 30 ? 'Day 30 challenge' : TEMPLATES[sd.template].title,
+        seeded: true, seedKcal: sd.kcal, seedMinutes: sd.minutes, g, steps: sd.steps.map((s) => Object.assign({}, s)) }));
+      continue;
+    }
+    if (type === 'finale') {
+      days.push(Object.assign(base, { type: 'workout', template: 'F', title: 'Cycle finale', g: 1, steps: buildBodyweight('F', c, 1) }));
+      continue;
+    }
+    const tk = 'ABC'[rot++ % 3];
+    const fin = c === 1 && day >= C1_FINISHER_FROM_DAY ? C1_FINISHERS[finRot++ % C1_FINISHERS.length] : null;
+    days.push(Object.assign(base, { type: 'workout', template: tk, title: TEMPLATES[tk].title, g, steps: buildBodyweight(tk, c, g, fin) }));
+  }
+  return (_cycleCache[ck] = days);
+}
+function planDay(c, day, focus) { return generateCycle(c, focus)[day - 1]; }
+// Plan keys: phase 1 keeps the plain "c1d5" form; later phases are "p2c1d5" so each phase has its own done-status and edits.
+function keyFor(phase, c, day) { return (phase > 1 ? `p${phase}` : '') + `c${c}d${day}`; }
+function parseKey(key) { const m = /^(?:p(\d+))?c(\d+)d(\d+)$/.exec(key || ''); return m ? { phase: m[1] ? +m[1] : 1, cycle: +m[2], day: +m[3] } : null; }
+// A planned session for a given phase, with that phase's key and focus.
+function phaseSession(data, phase, c, day) {
+  const focus = phaseInfo(data, phase).focus;
+  const s = planDay(c, day, focus);
+  return s ? Object.assign({}, s, { key: keyFor(phase, c, day), phase }) : null;
+}
+function vrFallback(sess) { return Object.assign({}, sess, { type: 'workout', title: 'Bodyweight instead of VR / game', template: 'C', fallbackOf: sess.key,
+  steps: buildBodyweight('C', sess.cycle, sess.g) }); }
+
+/* ---------- Applying user choices to a planned session ---------- */
+function convertDose(step, ex) {
+  if (ex.mode === 'reps') return step.reps != null ? { reps: step.reps } : { reps: round2(step.sec / 2.5) };
+  return step.sec != null ? { sec: step.sec } : { sec: round5(step.reps * 2.5) };
+}
+function applyLowImpact(steps) {
+  return steps.map((s) => {
+    const ex = LIBRARY[s.id];
+    if (!ex || !ex.hi || !ex.alt || !LIBRARY[ex.alt]) return s;
+    const alt = LIBRARY[ex.alt];
+    const out = Object.assign({}, s, { id: alt.id, swappedFrom: s.id });
+    delete out.reps; delete out.sec;
+    return Object.assign(out, convertDose(s, alt));
+  });
+}
+// The session the user will actually do: plan + their edits + low-impact swap.
+function resolveSession(sess, data) {
+  if (!sess) return null;
+  const edit = data && data.planEdits && data.planEdits[sess.key];
+  let steps = edit && Array.isArray(edit.steps) ? edit.steps.map((s) => Object.assign({}, s)) : sess.steps.map((s) => Object.assign({}, s));
+  steps = steps.filter((s) => LIBRARY[s.id]);
+  const lowImpact = !!(data && data.settings && data.settings.lowImpact);
+  if (lowImpact) steps = applyLowImpact(steps);
+  const changed = !!edit || (lowImpact && steps.some((s) => s.swappedFrom));
+  return Object.assign({}, sess, { steps, edited: !!edit, changed });
+}
+
+/* ---------- Estimates ---------- */
+function stepSeconds(step, secPerRep) {
+  const ex = LIBRARY[step.id];
+  if (step.sec != null) return step.sec;
+  return step.reps * (secPerRep || (ex && ex.tempo) || 2.5);
+}
+function restFor(sess, step, settings) {
+  const ex = LIBRARY[step.id];
+  if (ex && ex.equip === 'db') return settings.restDb;
+  return Math.max(5, Math.round(settings.rest * (sess.restScale || 1)));
+}
+function estimateSession(sess, settings, kg) {
+  const w = kg || APP.kcalRefKg;
+  if (!sess || !sess.steps.length) return { minutes: 0, kcal: 0 };
+  if (sess.seeded && !sess.changed) return { minutes: sess.seedMinutes, kcal: Math.round(sess.seedKcal * w / APP.kcalRefKg) };
+  let sec = 0, kcal = 0;
+  sess.steps.forEach((s, i) => {
+    const ex = LIBRARY[s.id], t = stepSeconds(s);
+    sec += t; kcal += ex.met * w * t / 3600;
+    if (i < sess.steps.length - 1) { const r = restFor(sess, s, settings); sec += r; kcal += 1.5 * w * r / 3600; }
+  });
+  return { minutes: Math.max(1, Math.round(sec / 60)), kcal: Math.round(kcal * APP.kcalFactor) };
+}
+// Built-in games (MET from settings) plus any the user added. includeRemoved keeps names for old logs.
+function allGames(data, includeRemoved) {
+  const met = (data.settings && data.settings.vrMet) || {};
+  return VR_GAMES.map((g) => Object.assign({}, g, { met: met[g.id] != null ? met[g.id] : 5, builtIn: true }))
+    .concat((data.customGames || []).filter((g) => includeRemoved || !g.deleted));
+}
+function vrKcal(minutesByGame, data, kg) {
+  const w = kg || APP.kcalRefKg;
+  return Math.round(allGames(data, true).reduce((sum, g) => sum + (g.met || 0) * w * ((minutesByGame[g.id] || 0) / 60), 0));
+}
+const GAME_INTENSITY = [
+  { met: 3.5, label: 'Light', hint: 'can chat easily' },
+  { met: 5, label: 'Moderate', hint: 'breathing harder' },
+  { met: 7, label: 'Hard', hint: 'tough to talk' },
+];
+function addCustomGame(data, name, kind, met) {
+  const g = { id: 'g' + uid(), name: String(name).trim().slice(0, 40), kind: String(kind || '').slice(0, 40), met: clamp(+met || 5, 1, 15), t: Date.now() };
+  data.customGames = (data.customGames || []).concat([g]);
+  return g;
+}
+
+/* ---------- Phases ----------
+   A phase is one goal + plan run (e.g. Oct–Jan weight loss, then a Feb maintenance or strength phase).
+   data.profile is the current phase; data.phases holds finished ones. History is never deleted. */
+const PHASE_MODES = { lose: 'Lose weight', maintain: 'Maintain weight' };
+function currentPhaseNo(data) { return data.profile.phase || 1; }
+function phaseInfo(data, n) {
+  if (n === currentPhaseNo(data)) return data.profile;
+  return (data.phases || []).find((p) => p.n === n) || { focus: 'balanced', level: 1, mode: 'lose' };
+}
+function planStart(data) { const ph = data.phases || []; return ph.length ? ph[0].startDate : data.profile.startDate; }
+function beginPhase(data, o) {
+  const p = data.profile, n = currentPhaseNo(data);
+  if (!DateX.valid(o.startDate) || o.startDate <= p.startDate) throw new Error('The new phase has to start after the current one began.');
+  data.phases = (data.phases || []).concat([{ n, startDate: p.startDate, endDate: DateX.add(o.startDate, -1), startWeight: p.startWeight,
+    goalWeight: p.goalWeight, goalDate: p.goalDate, mode: p.mode || 'lose', focus: p.focus || 'balanced', level: p.level || 1, t: Date.now() }]);
+  data.profile = { startDate: o.startDate, startWeight: o.startWeight, goalWeight: o.goalWeight, goalDate: o.mode === 'maintain' ? null : o.goalDate || null,
+    heightCm: p.heightCm, mode: o.mode, focus: o.focus, level: clamp(o.level || 1, 1, CYCLES.length), phase: n + 1 };
+  data.schedule.anchors = data.schedule.anchors.filter((a) => a.date < o.startDate);
+  data.schedule.pauses = data.schedule.pauses.filter((d) => d < o.startDate);
+  data.meta.milestone = 0;
+  data.meta.phasePromptSnooze = null;
+  return data;
+}
+// Suggest planning the next phase once the goal is reached, the date has passed, or all four levels are done.
+function phasePromptDue(data, today, pr) {
+  if (data.meta.phasePromptSnooze && today < data.meta.phasePromptSnooze) return null;
+  if (pr.status.key === 'reached') return 'You\'ve reached your goal weight.';
+  if (pr.status.key === 'overdue') return 'Your goal date has passed.';
+  const pi = planIndexFor(today, data);
+  if (pi.cycle > CYCLES.length) return 'You\'ve finished all four levels of the plan.';
+  return null;
+}
+
+/* ---------- Schedule: which plan day falls on a date ----------
+   index = anchor.index + days since anchor - pauses in between.
+   Each phase start is an anchor (at its starting level); "start next cycle" adds more.
+   A pause makes that date a "moved" day and pushes the rest of the plan back by one. */
+function baseAnchors(data) {
+  const start = planStart(data);
+  const phases = (data.phases || []).concat([Object.assign({ n: currentPhaseNo(data) }, data.profile)]);
+  const out = phases.filter((p) => p.startDate).map((p) => ({ date: p.startDate, index: ((p.level || 1) - 1) * APP.cycleLen, phase: p.n, focus: p.focus || 'balanced', rank: 0 }));
+  (data.schedule.anchors || []).filter((a) => a.date >= start).forEach((a) => out.push(Object.assign({ phase: 1, focus: 'balanced', rank: 1 }, a)));
+  return out.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.rank - b.rank));
+}
+function planIndexFor(date, data) {
+  const start = planStart(data);
+  if (!start || date < start) return { before: true };
+  const pauses = data.schedule.pauses || [];
+  if (pauses.includes(date)) return { paused: true };
+  const anchors = baseAnchors(data);
+  let a = anchors[0];
+  for (const x of anchors) if (x.date <= date) a = x;
+  const skipped = pauses.filter((p) => p >= a.date && p < date).length;
+  const index = a.index + DateX.diff(a.date, date) - skipped;
+  return { index, cycle: Math.floor(index / APP.cycleLen) + 1, day: (index % APP.cycleLen) + 1, phase: a.phase || 1, focus: a.focus || 'balanced' };
+}
+function sessionOn(date, data) {
+  const pi = planIndexFor(date, data);
+  if (pi.before || pi.paused) return Object.assign({ date }, pi);
+  return Object.assign({ date }, pi, { session: resolveSession(phaseSession(data, pi.phase, pi.cycle, pi.day), data) });
+}
+const isTraining = (s) => s && (s.type === 'workout' || s.type === 'db' || s.type === 'vr');
+
+/* ---------- Data model, migration, validation, merge ---------- */
+function defaultSettings() {
+  return { rest: 10, restDb: 30, handsFree: false, secPerRep: 2, lowImpact: false, dumbbellKg: 8, dumbbellStep: 2,
+    vrMet: { beatsaber: 5.5, bodycombat: 7, justdance: 5, ringfit: 4.5 }, beeps: true, vibrate: true, ownMedia: false, theme: 'auto', getReady: 5, energyUnit: 'kJ',
+    voice: { on: true, voiceURI: '', rate: 1, volume: 1, start: true, rest: true, halfway: true, countdown: true, complete: true } };
+}
+function defaultData() {
+  return { schema: APP.schema, updatedAt: 0,
+    profile: { startDate: null, startWeight: null, goalWeight: null, goalDate: null, heightCm: null, mode: 'lose', focus: 'balanced', level: 1, phase: 1 },
+    phases: [], customGames: [],
+    settings: defaultSettings(), days: {}, workouts: [], schedule: { anchors: [], pauses: [], dismissed: [] },
+    planEdits: {}, loads: {}, vrActive: null, meta: { setupDone: false, phasePromptSnooze: null, lastBackup: null, milestone: 0, createdAt: null } };
+}
+const MIGRATIONS = {
+  // v0 (pre-versioned layout): { weights:[{date,kg}], checkins:{date:{diet,energy,note}}, workouts:[...], settings:{...} }
+  0: (d) => {
+    const out = defaultData();
+    out.profile = Object.assign(out.profile, d.profile || {});
+    out.settings = Object.assign(out.settings, d.settings || {});
+    const days = {};
+    (Array.isArray(d.weights) ? d.weights : []).forEach((w) => { if (w && w.date) days[w.date] = Object.assign(days[w.date] || {}, { weight: w.kg, t: 1 }); });
+    Object.entries(d.checkins || {}).forEach(([date, c]) => { days[date] = Object.assign(days[date] || {}, c, { t: 1 }); });
+    out.days = days;
+    out.workouts = Array.isArray(d.workouts) ? d.workouts : [];
+    out.meta.setupDone = !!out.profile.startDate;
+    return out;
+  },
+};
+function migrate(raw) {
+  let d = raw, v = typeof raw.schema === 'number' ? raw.schema : 0;
+  if (v > APP.schema) throw new Error('This backup was made by a newer version of the app.');
+  while (v < APP.schema) { d = MIGRATIONS[v](d); v++; d.schema = v; }
+  return d;
+}
+const num = (v, lo, hi) => (typeof v === 'number' && isFinite(v) && v >= lo && v <= hi ? v : null);
+// Normalise and validate. Returns { data, dropped } or throws with a friendly message.
+function validateData(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('That file is not a Fit Tracker backup.');
+  if (raw.app === 'fit-tracker' && raw.data) raw = raw.data;
+  const d = migrate(JSON.parse(JSON.stringify(raw)));
+  if (d.days != null && (typeof d.days !== 'object' || Array.isArray(d.days))) throw new Error('Backup is damaged: daily logs are in the wrong format.');
+  if (d.workouts != null && !Array.isArray(d.workouts)) throw new Error('Backup is damaged: workouts are in the wrong format.');
+  const out = defaultData();
+  let dropped = 0;
+  const p = d.profile || {};
+  out.profile = { startDate: DateX.valid(p.startDate) ? p.startDate : null, startWeight: num(p.startWeight, 30, 400),
+    goalWeight: num(p.goalWeight, 30, 400), goalDate: DateX.valid(p.goalDate) ? p.goalDate : null, heightCm: num(p.heightCm, 100, 250),
+    mode: PHASE_MODES[p.mode] ? p.mode : 'lose', focus: FOCUSES[p.focus] ? p.focus : 'balanced',
+    level: num(p.level, 1, CYCLES.length) || 1, phase: num(p.phase, 1, 999) || 1 };
+  out.phases = (Array.isArray(d.phases) ? d.phases : []).filter((x) => x && DateX.valid(x.startDate) && num(x.n, 1, 999) != null).map((x) => ({
+    n: x.n, startDate: x.startDate, endDate: DateX.valid(x.endDate) ? x.endDate : null, startWeight: num(x.startWeight, 30, 400),
+    goalWeight: num(x.goalWeight, 30, 400), goalDate: DateX.valid(x.goalDate) ? x.goalDate : null, mode: PHASE_MODES[x.mode] ? x.mode : 'lose',
+    focus: FOCUSES[x.focus] ? x.focus : 'balanced', level: num(x.level, 1, CYCLES.length) || 1, t: num(x.t, 0, 1e15) || 0 }))
+    .sort((a, b) => a.n - b.n);
+  out.customGames = (Array.isArray(d.customGames) ? d.customGames : []).filter((g) => g && typeof g.id === 'string' && typeof g.name === 'string' && g.name.trim())
+    .map((g) => ({ id: g.id, name: g.name.slice(0, 40), kind: typeof g.kind === 'string' ? g.kind.slice(0, 40) : '', met: num(g.met, 1, 15) || 5,
+      t: num(g.t, 0, 1e15) || 0, deleted: !!g.deleted }));
+  const s = d.settings || {}, def = defaultSettings();
+  out.settings = Object.assign(def, s, { vrMet: Object.assign(def.vrMet, s.vrMet || {}), voice: Object.assign(def.voice, s.voice || {}) });
+  if (out.settings.energyUnit !== 'kcal') out.settings.energyUnit = 'kJ';
+  ['rest', 'restDb', 'secPerRep', 'dumbbellKg', 'dumbbellStep', 'getReady'].forEach((k) => { if (num(out.settings[k], 0, 600) == null) out.settings[k] = def[k]; });
+  Object.entries(d.days || {}).forEach(([date, e]) => {
+    if (!DateX.valid(date) || !e || typeof e !== 'object') { dropped++; return; }
+    const x = { t: num(e.t, 0, 1e15) || 0 };
+    if (e.weight != null) { const w = num(e.weight, 30, 400); if (w == null) dropped++; else x.weight = w; }
+    if (e.waist != null) { const w = num(e.waist, 40, 250); if (w == null) dropped++; else x.waist = w; }
+    if (typeof e.diet === 'boolean') x.diet = e.diet;
+    if (num(e.energy, 1, 5) != null) x.energy = e.energy;
+    if (typeof e.note === 'string') x.note = e.note.slice(0, 2000);
+    out.days[date] = x;
+  });
+  (d.workouts || []).forEach((w) => {
+    if (!w || typeof w !== 'object' || !DateX.valid(w.date)) { dropped++; return; }
+    out.workouts.push(Object.assign({}, w, { id: typeof w.id === 'string' ? w.id : uid(), t: num(w.t, 0, 1e15) || 0 }));
+  });
+  const sc = d.schedule || {};
+  out.schedule.pauses = (sc.pauses || []).filter(DateX.valid);
+  out.schedule.dismissed = (sc.dismissed || []).filter(DateX.valid);
+  out.schedule.anchors = (sc.anchors || []).filter((a) => a && DateX.valid(a.date) && num(a.index, 0, 1e6) != null);
+  out.planEdits = d.planEdits && typeof d.planEdits === 'object' ? d.planEdits : {};
+  out.loads = d.loads && typeof d.loads === 'object' ? d.loads : {};
+  out.meta = Object.assign(out.meta, d.meta || {});
+  out.vrActive = d.vrActive && typeof d.vrActive === 'object' && typeof d.vrActive.key === 'string' && d.vrActive.games ? d.vrActive : null;
+  out.updatedAt = num(d.updatedAt, 0, 1e15) || 0;
+  return { data: out, dropped };
+}
+let _uidN = 0;
+function uid() { return Date.now().toString(36) + (++_uidN).toString(36) + Math.random().toString(36).slice(2, 7); }
+
+// Merge two copies (e.g. phone + PC). Per-day entries and workouts: newest edit wins.
+// Settings/profile come from whichever copy was changed most recently.
+function mergeData(local, incoming) {
+  const newer = (incoming.updatedAt || 0) > (local.updatedAt || 0) ? incoming : local;
+  const out = JSON.parse(JSON.stringify(newer));
+  out.days = Object.assign({}, local.days);
+  Object.entries(incoming.days).forEach(([date, e]) => { const l = out.days[date]; if (!l || (e.t || 0) > (l.t || 0)) out.days[date] = e; });
+  const byId = {};
+  local.workouts.concat(incoming.workouts).forEach((w) => { const x = byId[w.id]; if (!x || (w.t || 0) > (x.t || 0)) byId[w.id] = w; });
+  out.workouts = Object.values(byId).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  const uniq = (a) => Array.from(new Set(a)).sort();
+  out.schedule.pauses = uniq(local.schedule.pauses.concat(incoming.schedule.pauses));
+  out.schedule.dismissed = uniq(local.schedule.dismissed.concat(incoming.schedule.dismissed));
+  const an = {}; local.schedule.anchors.concat(incoming.schedule.anchors).forEach((a) => { an[a.date] = a; });
+  out.schedule.anchors = Object.values(an);
+  out.planEdits = Object.assign({}, local.planEdits);
+  Object.entries(incoming.planEdits).forEach(([k, e]) => { const l = out.planEdits[k]; if (!l || (e.t || 0) > (l.t || 0)) out.planEdits[k] = e; });
+  out.loads = Object.assign({}, local.loads);
+  Object.entries(incoming.loads).forEach(([k, e]) => { const l = out.loads[k]; if (!l || (e.t || 0) > (l.t || 0)) out.loads[k] = e; });
+  const games = {};
+  (local.customGames || []).concat(incoming.customGames || []).forEach((g) => { const x = games[g.id]; if (!x || (g.t || 0) > (x.t || 0)) games[g.id] = g; });
+  out.customGames = Object.values(games);
+  out.meta.lastBackup = [local.meta.lastBackup, incoming.meta.lastBackup].filter(Boolean).sort().pop() || null;
+  out.meta.milestone = Math.max(local.meta.milestone || 0, incoming.meta.milestone || 0);
+  return out;
+}
+
+/* ---------- Workouts, streaks, missed days ---------- */
+const liveWorkouts = (data) => data.workouts.filter((w) => !w.deleted);
+function workoutsOn(date, data) { return liveWorkouts(data).filter((w) => w.date === date); }
+function isPlanKeyDone(key, data) { return liveWorkouts(data).some((w) => w.planKey === key); }
+function dayDone(date, data) {
+  const s = sessionOn(date, data);
+  if (s.session && isPlanKeyDone(s.session.key, data)) return true;
+  return workoutsOn(date, data).length > 0;
+}
+function workoutStreak(data, today) {
+  let n = 0;
+  const start = planStart(data);
+  if (!start) return 0;
+  for (let d = today, i = 0; d >= start && i < 400; d = DateX.add(d, -1), i++) {
+    const s = sessionOn(d, data);
+    const done = workoutsOn(d, data).length > 0 || (s.session && isPlanKeyDone(s.session.key, data));
+    if (done) { n++; continue; }
+    if (s.paused || !s.session || !isTraining(s.session)) continue; // rest and moved days don't break it
+    if (d === today) continue; // today isn't over yet
+    break;
+  }
+  return n;
+}
+function dietStreak(data, today) {
+  let n = 0, d = today;
+  if (!(data.days[d] && data.days[d].diet)) d = DateX.add(d, -1);
+  for (let i = 0; i < 400 && data.days[d] && data.days[d].diet; i++, d = DateX.add(d, -1)) n++;
+  return n;
+}
+// Most recent run of missed training days (since the last completed one), within a week.
+function findMissed(data, today) {
+  const start = planStart(data);
+  if (!start) return null;
+  let first = null, count = 0;
+  for (let i = 1; i <= 7; i++) {
+    const d = DateX.add(today, -i);
+    if (d < start) break;
+    if (workoutsOn(d, data).length) break;
+    const s = sessionOn(d, data);
+    if (s.session && isPlanKeyDone(s.session.key, data)) break;
+    if (s.session && isTraining(s.session)) {
+      if (data.schedule.dismissed.includes(d)) break;
+      first = d; count++;
+    }
+  }
+  if (!first) return null;
+  return { date: first, count, session: sessionOn(first, data).session, shiftDays: DateX.diff(first, today) };
+}
+// Move the plan so the missed day happens today: every day from `from` up to yesterday becomes "moved".
+function shiftPlan(data, from, today) {
+  const p = new Set(data.schedule.pauses);
+  for (let d = from; d < today; d = DateX.add(d, 1)) p.add(d);
+  data.schedule.pauses = Array.from(p).sort();
+  return data;
+}
+function skipToday(data, today) { if (!data.schedule.pauses.includes(today)) data.schedule.pauses.push(today); data.schedule.pauses.sort(); return data; }
+function startNextCycle(data, today) {
+  const pi = planIndexFor(today, data);
+  const c = pi.index != null ? pi.cycle : 1;
+  data.schedule.anchors = data.schedule.anchors.filter((a) => a.date !== today).concat([{ date: today, index: c * APP.cycleLen, phase: pi.phase || 1, focus: pi.focus || 'balanced' }]);
+  data.schedule.pauses = data.schedule.pauses.filter((d) => d < today);
+  return data;
+}
+
+/* ---------- Weight trend and pace ---------- */
+function weightSeries(data) {
+  return Object.entries(data.days).filter(([, e]) => typeof e.weight === 'number').map(([date, e]) => ({ date, kg: e.weight }))
+    .sort((a, b) => (a.date < b.date ? -1 : 1));
+}
+function movingAverage(series, window) {
+  window = window || 7;
+  return series.map((p, i) => {
+    const n0 = DateX.num(p.date) - (window - 1);
+    let s = 0, k = 0;
+    for (let j = i; j >= 0 && DateX.num(series[j].date) >= n0; j--) { s += series[j].kg; k++; }
+    return { date: p.date, kg: s / k };
+  });
+}
+// Least-squares slope (kg/day) over the last `days` days. Needs 3+ points spanning 7+ days.
+function recentSlope(series, endDate, days) {
+  const end = DateX.num(endDate), pts = series.filter((p) => DateX.num(p.date) > end - days && DateX.num(p.date) <= end);
+  if (pts.length < 3) return null;
+  const xs = pts.map((p) => DateX.num(p.date)), ys = pts.map((p) => p.kg);
+  if (xs[xs.length - 1] - xs[0] < 7) return null;
+  const mx = xs.reduce((a, b) => a + b) / xs.length, my = ys.reduce((a, b) => a + b) / ys.length;
+  let sxy = 0, sxx = 0; xs.forEach((x, i) => { sxy += (x - mx) * (ys[i] - my); sxx += (x - mx) * (x - mx); });
+  return sxx ? sxy / sxx : null;
+}
+function progress(data, today) {
+  const p = data.profile, series = weightSeries(data);
+  const ma = movingAverage(series);
+  const trend = ma.length ? ma[ma.length - 1].kg : null;
+  const inPhase = series.filter((x) => !p.startDate || x.date >= p.startDate);
+  const startW = p.startWeight != null ? p.startWeight : inPhase.length ? inPhase[0].kg : null;
+  const out = { series, ma, trend, startW, goal: p.goalWeight, goalDate: p.goalDate, mode: p.mode || 'lose', latest: series.length ? series[series.length - 1] : null };
+  if (out.mode === 'maintain') {
+    const slope = series.length ? recentSlope(series, series[series.length - 1].date, 21) : null;
+    Object.assign(out, { lost: trend != null && startW != null ? startW - trend : null, toGo: null, daysLeft: null, required: null, projected: null,
+      actual: slope != null ? -slope * 7 : null, diff: trend != null && p.goalWeight != null ? trend - p.goalWeight : null });
+    out.status = maintainStatus(out);
+    return out;
+  }
+  out.lost = trend != null && startW != null ? startW - trend : null;
+  out.toGo = trend != null && p.goalWeight != null ? trend - p.goalWeight : null;
+  out.daysLeft = p.goalDate ? DateX.diff(today, p.goalDate) : null;
+  out.required = out.toGo != null && out.daysLeft > 0 ? out.toGo / (out.daysLeft / 7) : null;
+  const slope = series.length ? recentSlope(series, series[series.length - 1].date, 21) : null;
+  out.actual = slope != null ? -slope * 7 : null; // kg lost per week (positive = losing)
+  if (slope != null && slope < 0 && out.toGo > 0) out.projected = DateX.add(out.latest.date, Math.ceil(out.toGo / -slope));
+  else out.projected = null;
+  out.status = paceStatus(out);
+  return out;
+}
+function paceStatus(pr) {
+  if (pr.toGo != null && pr.toGo <= 0) return { key: 'reached', label: 'Goal reached', line: 'You\'ve hit your goal weight. Plan your next phase: maintain, or keep going.' };
+  if (pr.daysLeft != null && pr.daysLeft <= 0) return { key: 'overdue', label: 'Past goal date', line: 'The goal date has passed. Start a new phase, or set a later date in Settings and keep the trend going down.' };
+  if (pr.actual == null || pr.required == null) return { key: 'unknown', label: 'Not enough data', line: 'Log your weight a few times a week. The trend needs about a week of entries.' };
+  const ratio = pr.required > 0 ? pr.actual / pr.required : 1;
+  if (ratio >= 1.1) return { key: 'ahead', label: 'Ahead', line: pr.actual > 1.2 ? 'Ahead of pace, and it\'s fast. Make sure you\'re eating enough protein and recovering well.' : 'Ahead of pace. Keep doing what you\'re doing.' };
+  if (ratio >= 0.85) return { key: 'on', label: 'On track', line: 'Right on pace. Consistency is doing the work.' };
+  if (pr.actual <= 0) return { key: 'behind', label: 'Behind', line: 'The trend is flat or rising. Look at the last two weeks of diet days. Small daily gaps add up.' };
+  return { key: 'behind', label: 'Behind', line: `Losing ${pr.actual.toFixed(1)} kg/week against ${pr.required.toFixed(1)} needed. Still progress. A slightly later finish is fine.` };
+}
+// Maintenance: stay within ±1 kg of the target (trend weight, so daily swings don't count).
+function maintainStatus(pr) {
+  if (pr.diff == null) return { key: 'unknown', label: 'Not enough data', line: 'Log your weight a few times a week to see how you\'re holding.' };
+  if (Math.abs(pr.diff) <= 1) return { key: 'on', label: 'Holding steady', line: `Within ${Math.abs(pr.diff).toFixed(1)} kg of your target. Keeping it there is the whole job now.` };
+  if (pr.diff > 1) return { key: 'behind', label: 'Above range', line: `${pr.diff.toFixed(1)} kg above target. A couple of tighter diet weeks usually brings it back.` };
+  return { key: 'ahead', label: 'Below range', line: `${(-pr.diff).toFixed(1)} kg below target. If that's not intended, eat a bit more, especially protein.` };
+}
+function paceCaution(pr) {
+  return pr.required != null && pr.required > 1 ? 'The required pace is over 1 kg a week, which is hard to sustain. Landing a kilo or two above goal by the deadline is still a strong result.' : '';
+}
+function milestoneReached(data, pr) {
+  if (pr.lost == null || pr.mode === 'maintain') return null;
+  const m = Math.floor(pr.lost / 2) * 2;
+  return m >= 2 && m > (data.meta.milestone || 0) ? m : null;
+}
+
+/* ---------- Weekly review ---------- */
+function weekReview(data, today) {
+  const mon = DateX.mondayOf(today);
+  let planned = 0, done = 0, diet = 0, daysSoFar = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = DateX.add(mon, i);
+    if (d > today) break;
+    daysSoFar++;
+    const s = sessionOn(d, data);
+    if (s.session && isTraining(s.session)) planned++;
+    if (workoutsOn(d, data).length) done++;
+    if (data.days[d] && data.days[d].diet) diet++;
+  }
+  const series = weightSeries(data), ma = movingAverage(series);
+  const at = (date) => { let v = null; ma.forEach((p) => { if (p.date <= date) v = p.kg; }); return v; };
+  const now = at(today), before = at(DateX.add(mon, -1));
+  const change = now != null && before != null ? now - before : null;
+  let tip;
+  if (done < planned - 1) tip = 'A couple of sessions slipped. Shorter is fine: even the first 10 minutes counts.';
+  else if (daysSoFar >= 3 && diet < daysSoFar * 0.6) tip = 'Training is solid. The diet days are where most of the progress will come from this week.';
+  else if (change != null && change > 0.3) tip = 'Weight is up a little. Often that\'s water or salt. Watch the trend, not the day.';
+  else tip = 'Good week. Keep the same rhythm.';
+  return { from: mon, planned, done, diet, daysSoFar, change, tip };
+}
+
+/* ---------- Messages for the Today screen ---------- */
+const MESSAGES = {
+  morningWorkout: ['Today\'s session is ready when you are.', 'One session today. Start it and the rest follows.', 'Fifteen minutes from now you could be done.', 'Show up for today\'s session. That\'s the whole job.'],
+  morningVR: ['VR / game day. Pick a game, get a sweat on, have some fun.', 'Change of pace today: VR or a game. Aim for about half an hour.'],
+  morningRest: ['Rest day. Recovery is part of the plan, not a break from it.', 'No workout today. A walk and a good night\'s sleep count.'],
+  afternoonPending: ['Still time to get today\'s session in.', 'Today\'s session is waiting. Even a shortened version counts.'],
+  eveningGreat: ['Workout done and diet on track. That\'s a complete day.', 'Both boxes ticked today. Days like this are how the trend moves.'],
+  eveningWorkout: ['Session done. Nice work. Tick the diet box if today went to plan.', 'Training done for today. Rest up.'],
+  eveningDiet: ['Diet on track today. That matters more than any single workout.', 'Good eating day. Tomorrow\'s session is a fresh start.'],
+  eveningNone: ['Not every day goes to plan. Tomorrow is a clean slate.', 'Quiet day. No guilt, just pick it back up tomorrow.'],
+  eveningRest: ['Rest day done. Back at it tomorrow.', 'Recovered and ready for tomorrow.'],
+};
+function pick(list, seed) { let h = 0; for (const ch of seed) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return list[h % list.length]; }
+function dailyMessage(data, today, hour) {
+  const s = sessionOn(today, data), sess = s.session;
+  const done = workoutsOn(today, data).length > 0 || (sess && isPlanKeyDone(sess.key, data));
+  const diet = data.days[today] && data.days[today].diet;
+  const rest = !sess || !isTraining(sess);
+  let key;
+  if (hour < 12) key = done ? 'eveningWorkout' : rest ? 'morningRest' : sess.type === 'vr' ? 'morningVR' : 'morningWorkout';
+  else if (hour < 18) key = done ? (diet ? 'eveningGreat' : 'eveningWorkout') : rest ? 'morningRest' : 'afternoonPending';
+  else key = done ? (diet ? 'eveningGreat' : 'eveningWorkout') : rest ? (diet ? 'eveningDiet' : 'eveningRest') : diet ? 'eveningDiet' : 'eveningNone';
+  let text = pick(MESSAGES[key], today + key);
+  const streak = workoutStreak(data, today);
+  if (streak >= 3 && hour < 18 && !done && !rest) text += ` ${streak} sessions in a row so far.`;
+  return { key, text };
+}
+
+/* ---------- Speech phrases ---------- */
+function spokenName(ex) { return ex.base ? `${ex.base}, ${ex.side}` : ex.name; }
+function spokenTarget(step) {
+  if (step.sec != null) return step.sec >= 60 && step.sec % 60 === 0 ? `${step.sec / 60} minute${step.sec > 60 ? 's' : ''}` : `${step.sec} seconds`;
+  return `${step.reps} reps`;
+}
+function doseLabel(step) { return step.sec != null ? `${step.sec} s` : `x${step.reps}`; }
+
+if (typeof globalThis !== 'undefined') {
+  globalThis.Core = { APP, LIBRARY, POSE_DEF, SEED_DAYS, TEMPLATES, DB_TEMPLATES, CYCLES, VR_GAMES, DateX, resolvePose, figureSVG, slotType,
+    generateCycle, planDay, vrFallback, resolveSession, applyLowImpact, estimateSession, vrKcal, planIndexFor, sessionOn, isTraining,
+    defaultData, defaultSettings, migrate, validateData, mergeData, workoutStreak, dietStreak, findMissed, shiftPlan, skipToday,
+    startNextCycle, weightSeries, movingAverage, recentSlope, progress, paceCaution, milestoneReached, weekReview, dailyMessage,
+    spokenName, spokenTarget, doseLabel, uid, cycleCfg, restFor, stepSeconds, keyFor, parseKey, phaseSession, phaseInfo, planStart,
+    beginPhase, phasePromptDue, allGames, addCustomGame, isPlanKeyDone };
+}
+</script>
+<!-- UI -->
+<script id="ui">
+'use strict';
+/* =====================================================================
+   UI
+   ===================================================================== */
+const $ = (s, r) => (r || document).querySelector(s);
+const today = () => DateX.today();
+let D; // the user's data
+const V = { tab: 'today', open: null, planCycle: null, calMonth: null, chartRange: 'all', sheet: null, showAllWeights: false };
+let _cache = {};
+
+/* ---------- Storage ---------- */
+const Store = {
+  loadError: null, saveFailed: false,
+  load() {
+    let raw = null;
+    try { raw = localStorage.getItem(APP.storageKey); } catch (e) {
+      Store.loadError = 'This browser is blocking storage, so nothing can be saved here. Open the app from the Home Screen or a normal (not private) tab.';
+      return defaultData();
+    }
+    if (!raw) return defaultData();
+    try { return validateData(JSON.parse(raw)).data; } catch (e) {
+      try { localStorage.setItem(APP.storageKey + '.unreadable.' + Date.now(), raw); } catch (_) { /* ignore */ }
+      Store.loadError = 'Saved data could not be read (' + e.message + '). A copy was kept. Restore a backup in Settings.';
+      return defaultData();
+    }
+  },
+  save() {
+    D.updatedAt = Date.now();
+    try { localStorage.setItem(APP.storageKey, JSON.stringify(D)); Store.saveFailed = false; } catch (e) {
+      Store.saveFailed = true;
+      toast('Could not save. Storage may be full. Export a backup from Settings.');
+    }
+  },
+};
+function commit(fn, opts) { if (fn) fn(D); Store.save(); if (!opts || opts.render !== false) render(); }
+function setDay(date, patch) {
+  const e = Object.assign({}, D.days[date] || {}, patch, { t: Date.now() });
+  Object.keys(e).forEach((k) => { if (e[k] === null || e[k] === undefined || e[k] === '') delete e[k]; });
+  D.days[date] = e;
+}
+// Re-render shortly after a field changes, unless the user is still typing somewhere.
+let _softT;
+function softRender() {
+  clearTimeout(_softT);
+  _softT = setTimeout(() => { const a = document.activeElement; if (!a || !a.matches('input,textarea,select')) render(); }, 500);
+}
+
+/* ---------- Small helpers ---------- */
+function toast(msg) {
+  const t = $('#toast');
+  t.innerHTML = `<div class="toast" role="status">${esc(msg)}</div>`;
+  clearTimeout(toast._t); toast._t = setTimeout(() => { t.innerHTML = ''; }, 3200);
+}
+function currentKg() {
+  const pr = cached('progress', () => progress(D, today()));
+  return pr.trend || (pr.latest && pr.latest.kg) || D.profile.startWeight || APP.kcalRefKg;
+}
+function cached(k, fn) { return k in _cache ? _cache[k] : (_cache[k] = fn()); }
+function planDates() {
+  return cached('planDates', () => {
+    const map = {}, start = planStart(D);
+    if (!start) return map;
+    for (let i = 0; i < 900; i++) {
+      const d = DateX.add(start, i), pi = planIndexFor(d, D);
+      if (pi.index != null) { const k = keyFor(pi.phase, pi.cycle, pi.day); if (!map[k]) map[k] = d; }
+    }
+    return map;
+  });
+}
+// Energy is estimated in kcal internally and shown in the user's unit (kJ by default; 1 kcal = 4.184 kJ).
+function eUnit() { return D.settings.energyUnit === 'kcal' ? 'kcal' : 'kJ'; }
+function energy(kcal) { return eUnit() === 'kcal' ? Math.round(kcal) : Math.round((kcal * 4.184) / 10) * 10; }
+function fmtE(kcal) { return `${energy(kcal)} ${eUnit()}`; }
+function fmtKg(v, dp) { return v == null ? '–' : v.toFixed(dp == null ? 1 : dp); }
+function dayLabel(date) {
+  const t = today();
+  if (date === t) return 'Today';
+  if (date === DateX.add(t, 1)) return 'Tomorrow';
+  if (date === DateX.add(t, -1)) return 'Yesterday';
+  return DateX.pretty(date, { weekday: 'short' });
+}
+function exName(id) { return LIBRARY[id] ? LIBRARY[id].name : id; }
+function loadFor(id) { const l = D.loads[id]; return l && l.kg ? l.kg : D.settings.dumbbellKg; }
+const ICON = {
+  today: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  plan: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.5"/><circle cx="4.5" cy="12" r="1.5"/><circle cx="4.5" cy="18" r="1.5"/></svg>',
+  weight: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 8l4 4 3-2 5 6"/></svg>',
+  calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  flame: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c1 4 5 5.5 5 11a5 5 0 0 1-10 0c0-2.5 1.2-4 2.5-5 .2 2 1 3 2 3.3C11 8.5 11 5 12 2z"/></svg>',
+  vr: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"><path d="M8 22h48v20a4 4 0 0 1-4 4H40l-4-6h-8l-4 6H12a4 4 0 0 1-4-4z"/><circle cx="22" cy="32" r="4"/><circle cx="42" cy="32" r="4"/></svg>',
+  rest: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><path d="M44 40a18 18 0 1 1-20-28 14 14 0 0 0 20 28z"/></svg>',
+  back: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  pencil: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
+};
+const flameHTML = () => `<span class="flame" aria-label="${workoutStreak(D, today())} session streak">${ICON.flame}${workoutStreak(D, today())}</span>`;
+function sessionThumb(s) {
+  if (s.type === 'vr') return `<div class="thumb" style="color:var(--purple)">${ICON.vr}</div>`;
+  if (s.type === 'rest') return `<div class="thumb" style="color:var(--muted)">${ICON.rest}</div>`;
+  const id = s.steps.find((x) => LIBRARY[x.id] && LIBRARY[x.id].area !== 'cardio' && LIBRARY[x.id].area !== 'mobility') || s.steps[0];
+  return `<div class="thumb">${figureSVG(id.id, { animate: false }) || ''}</div>`;
+}
+const typePill = (s) => s.type === 'vr' ? '<span class="pill vr">VR / game</span>' : s.type === 'db' ? '<span class="pill db">Strength</span>' : s.type === 'rest' ? '<span class="pill rest">Rest</span>' : '';
+
+/* ---------- Render ---------- */
+function applyTheme() {
+  const t = D.settings.theme;
+  if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); else document.documentElement.removeAttribute('data-theme');
+}
+function render() {
+  _cache = {};
+  applyTheme();
+  const main = $('#main');
+  if (!D.meta.setupDone) { main.innerHTML = viewSetup(); renderSheet(); return; }
+  let html;
+  if (V.open) html = viewSession();
+  else html = ({ today: viewToday, plan: viewPlan, weight: viewWeight, calendar: viewCalendar, settings: viewSettings })[V.tab]() + tabbar();
+  main.innerHTML = html;
+  renderSheet();
+  if (V.open && V.open.vr) vrTick();
+}
+function tabbar() {
+  const t = [['today', 'Today'], ['plan', 'Plan'], ['weight', 'Weight'], ['calendar', 'Calendar'], ['settings', 'Settings']];
+  return `<nav class="tabbar" aria-label="Sections">${t.map(([k, l]) => `<button data-act="tab" data-tab="${k}" ${V.tab === k ? 'aria-current="page"' : ''}>${ICON[k]}<span>${l}</span></button>`).join('')}</nav>`;
+}
+const footer = () => '<p class="footer-note">General fitness guidance, not medical advice. Stop if something hurts, and check with a doctor if you\'re unsure.</p>';
+function banners() {
+  let h = '';
+  if (Store.loadError) h += `<div class="card warn small" role="alert">${esc(Store.loadError)}</div>`;
+  if (Store.saveFailed) h += '<div class="card warn small" role="alert">Your last change couldn\'t be saved. Export a backup from Settings.</div>';
+  return h;
+}
+
+/* ---------- First run ---------- */
+function viewSetup() {
+  const p = D.profile;
+  return `<main class="screen stack">
+    <h1>Welcome</h1>
+    <p class="muted">A few numbers to set up your plan. Everything stays on this device. Nothing is sent anywhere.</p>
+    ${banners()}
+    <div class="card stack">
+      <label class="field"><span>Start date (plan day 1)</span><input type="date" id="su-start" value="${p.startDate || today()}"></label>
+      <div class="grid2">
+        <label class="field"><span>Start weight (kg)</span><input type="number" inputmode="decimal" step="0.1" id="su-sw" value="${p.startWeight || ''}"></label>
+        <label class="field"><span>Goal weight (kg)</span><input type="number" inputmode="decimal" step="0.1" id="su-gw" value="${p.goalWeight || ''}"></label>
+      </div>
+      <div class="grid2">
+        <label class="field"><span>Goal date</span><input type="date" id="su-gd" value="${p.goalDate || ''}"></label>
+        <label class="field"><span>Height (cm, optional)</span><input type="number" inputmode="decimal" id="su-h" value="${p.heightCm || ''}"></label>
+      </div>
+      <button class="btn primary block big" data-act="setupDone">Let's go</button>
+    </div>
+    <div class="card stack">
+      <h3>Moving from another device?</h3>
+      <p class="small muted">Restore a backup file you exported earlier.</p>
+      <label class="btn block">Restore a backup<input type="file" accept="application/json,.json" class="sr" data-act-change="importFile"></label>
+    </div>
+    ${footer()}
+  </main>`;
+}
+
+/* ---------- Today ---------- */
+function viewToday() {
+  const t = today(), so = sessionOn(t, D);
+  const e = D.days[t] || {};
+  const hour = new Date().getHours();
+  const msg = dailyMessage(D, t, hour);
+  let h = `<main class="screen stack">
+    <div class="topbar"><div><h1>Today</h1><div class="muted">${DateX.pretty(t, { weekday: 'long', month: 'long' })}</div></div>${flameHTML()}</div>
+    ${banners()}
+    <div class="card msg"><div class="tiny muted">${hour < 12 ? 'Good morning' : hour < 18 ? 'Afternoon check-in' : 'Evening wrap-up'}</div><div>${esc(msg.text)}</div></div>`;
+  h += todaySessionCard(so);
+  // Missed days
+  const miss = findMissed(D, t);
+  if (miss) {
+    h += `<div class="card warn stack"><h3>Missed ${miss.count > 1 ? miss.count + ' sessions' : 'a session'}</h3>
+      <p class="small muted">No problem. Pick up from Day ${miss.session.day} today, which moves the rest of the plan back ${miss.shiftDays} day${miss.shiftDays > 1 ? 's' : ''}, or skip it and carry on.</p>
+      <div class="grid2"><button class="btn primary" data-act="shiftMissed" data-date="${miss.date}">Pick up Day ${miss.session.day}</button>
+      <button class="btn" data-act="skipMissed" data-date="${miss.date}">Skip and continue</button></div></div>`;
+  }
+  const why = phasePromptDue(D, t, cached('progress', () => progress(D, t)));
+  if (why) {
+    h += `<div class="card accent stack"><h3>Ready for what's next?</h3><p class="small">${esc(why)} Set up your next phase: hold your new weight, keep losing, or shift the focus to strength. Your history stays.</p>
+      <div class="grid2"><button class="btn primary" data-act="phaseOpen">Plan next phase</button><button class="btn" data-act="phaseSnooze">Not now</button></div></div>`;
+  }
+  h += checkinCard(t, e) + footer() + '</main>';
+  return h;
+}
+function milestoneCard(pr) {
+  const ms = milestoneReached(D, pr);
+  return ms ? `<div class="card msg stack"><h3>${ms} kg down</h3><p class="small">That's real, measurable progress on the trend line, not just a good weigh-in. Keep going.</p><button class="btn" data-act="ackMilestone" data-m="${ms}">Nice</button></div>` : '';
+}
+function backupDue() {
+  const lb = D.meta.lastBackup, t = today();
+  const since = lb ? DateX.diff(lb.slice(0, 10), t) : planStart(D) ? DateX.diff(planStart(D), t) : 0;
+  return since >= 7 && (Object.keys(D.days).length > 0 || D.workouts.length > 0) ? since : 0;
+}
+function todaySessionCard(so) {
+  if (so.before) return `<div class="card"><h2>Plan starts ${DateX.pretty(planStart(D), { weekday: 'long' })}</h2><p class="muted small">Have a look at the Plan tab in the meantime.</p></div>`;
+  if (so.paused) return '<div class="card"><h2>Plan moved</h2><p class="muted small">Today was moved, so the plan picks up again tomorrow. Treat it as a rest day.</p></div>';
+  const s = so.session, done = isPlanKeyDone(s.key, D) || workoutsOn(so.date, D).length > 0;
+  const head = `<div class="tiny muted">Cycle ${s.cycle} · ${s.day === 31 ? 'cycle break' : `Day ${s.day} of 30`} · ${esc(s.level)}</div>`;
+  if (s.type === 'rest') {
+    return `<div class="card row">${sessionThumb(s).replace('thumb', 'thumb" style="width:56px;height:56px')}<div class="grow">${head}<h2>${esc(s.title)}</h2>
+      <p class="small muted">${s.day === 31 ? 'End of the cycle. Rest, then the next cycle steps things up a notch.' : 'Recovery day. An easy walk or some stretching is a bonus, not a requirement.'}</p></div></div>`;
+  }
+  if (s.type === 'vr') {
+    return `<div class="card accent stack">${head}<div class="spread"><h2>VR / game session ${done ? '<span class="pill done">Done</span>' : ''}</h2><span style="width:48px;color:var(--purple)">${ICON.vr}</span></div>
+      <p class="small muted">VR (Beat Saber, Body Combat) or Switch (Just Dance, Ring Fit), mixed however you like. Aim for about ${s.targetMin} minutes at a solid effort.</p>
+      <button class="btn primary block big" data-act="openSession" data-key="${s.key}">${done ? 'View' : 'Open VR / game session'}</button></div>`;
+  }
+  const est = estimateSession(s, D.settings, currentKg());
+  return `<div class="card accent stack">${head}
+    <button class="row" data-act="openSession" data-key="${s.key}" style="background:none;border:0;padding:0;text-align:left;width:100%">
+      ${sessionThumb(s).replace('thumb', 'thumb" style="width:64px;height:64px')}
+      <div class="grow"><h2>${esc(s.title)} ${typePill(s)} ${done ? '<span class="pill done">Done</span>' : ''}</h2>
+      <div class="muted small">${s.steps.length} exercises · ${est.minutes} min · ~${fmtE(est.kcal)} (est.)</div></div></button>
+    <button class="btn primary block big" data-act="startWorkout" data-key="${s.key}">${done ? 'Do it again' : 'START'}</button>
+    ${done ? '' : '<button class="btn ghost block small" data-act="skipToday">Can\'t today? Move it to tomorrow</button>'}
+  </div>`;
+}
+function checkinCard(date, e) {
+  const done = workoutsOn(date, D).length > 0;
+  return `<div class="card stack"><h2>Check-in</h2>
+    <div class="grid2">
+      <label class="field"><span>Weight (kg, optional)</span><input type="number" inputmode="decimal" step="0.1" data-field="day.weight" data-date="${date}" value="${e.weight != null ? e.weight : ''}"></label>
+      <div class="field"><span>Workout</span><div class="status-box ${done ? 'done' : ''}">${done ? '✓ Done' : 'Not yet'}</div></div>
+    </div>
+    <label class="check"><input type="checkbox" data-field="day.diet" data-date="${date}" ${e.diet ? 'checked' : ''}><span><b>Diet on track</b></span></label>
+    <div><div class="small muted" id="en-l">Energy</div><div class="seg" role="group" aria-labelledby="en-l">${[1, 2, 3, 4, 5].map((n) => `<button data-act="setEnergy" data-date="${date}" data-v="${n}" class="${e.energy === n ? 'on' : ''}" aria-pressed="${e.energy === n}">${n}</button>`).join('')}</div></div>
+    <label class="field"><span>Note</span><textarea data-field="day.note" data-date="${date}" placeholder="How did today go?">${esc(e.note || '')}</textarea></label>
+  </div>`;
+}
+function snapshotCard(pr) {
+  const st = pr.status;
+  const maintain = pr.mode === 'maintain';
+  const col = { ahead: maintain ? 'var(--orange)' : 'var(--green)', on: 'var(--green)', behind: 'var(--orange)', reached: 'var(--green)' }[st.key] || 'var(--muted)';
+  const head = `<div class="spread"><div><h2>Progress</h2><div class="tiny muted">Phase ${currentPhaseNo(D)} · ${esc(PHASE_MODES[pr.mode])}</div></div><span class="pill" style="background:${col};color:#fff">${st.label}</span></div>`;
+  if (maintain) {
+    return `<div class="card stack">${head}<div class="grid2">
+      <div class="stat"><b>${fmtKg(pr.trend)}</b><span>trend weight (kg)</span></div>
+      <div class="stat"><b>${fmtKg(pr.goal)}</b><span>target (kg)</span></div>
+      <div class="stat"><b>${pr.diff != null ? (pr.diff > 0 ? '+' : '') + pr.diff.toFixed(1) : '–'}</b><span>kg from target</span></div>
+      <div class="stat"><b>${D.profile.startDate ? Math.max(0, DateX.diff(D.profile.startDate, today()) + 1) : '–'}</b><span>days in phase</span></div>
+      </div><p class="small">${esc(st.line)}</p></div>`;
+  }
+  return `<div class="card stack">${head}
+    <div class="grid2">
+      <div class="stat"><b>${fmtKg(pr.trend)}</b><span>trend weight (kg)</span></div>
+      <div class="stat"><b>${pr.lost != null ? fmtKg(pr.lost) : '–'}</b><span>kg lost</span></div>
+      <div class="stat"><b>${pr.toGo != null ? fmtKg(Math.max(0, pr.toGo)) : '–'}</b><span>kg to go</span></div>
+      <div class="stat"><b>${pr.daysLeft != null ? Math.max(0, pr.daysLeft) : '–'}</b><span>days left</span></div>
+    </div>
+    <p class="small">${esc(st.line)}</p></div>`;
+}
+function weekCard() {
+  const w = weekReview(D, today());
+  return `<div class="card stack"><h2>This week</h2>
+    <div class="grid3"><div class="stat"><b>${w.done}/${w.planned}</b><span>sessions</span></div>
+    <div class="stat"><b>${w.diet}/${w.daysSoFar}</b><span>diet days</span></div>
+    <div class="stat"><b>${w.change == null ? '–' : (w.change > 0 ? '+' : '') + w.change.toFixed(1)}</b><span>kg trend</span></div></div>
+    <p class="small muted">${esc(w.tip)}</p></div>`;
+}
+
+/* ---------- Plan ---------- */
+function currentCycle() { const pi = planIndexFor(today(), D); return pi.cycle || 1; }
+function viewPlan() {
+  const cur = currentCycle(), c = V.planCycle || cur, dates = planDates(), t = today();
+  const ph = currentPhaseNo(D), days = generateCycle(c, D.profile.focus).map((s) => Object.assign({}, s, { key: keyFor(ph, c, s.day), phase: ph }));
+  const maxC = Math.max(4, cur);
+  let h = `<main class="screen">
+    <div class="topbar"><div><h1>Plan</h1><div class="muted small">Cycle ${c} · ${esc(levelName(c))}</div></div>${flameHTML()}</div>
+    <div class="row wrap" style="margin-bottom:14px" role="group" aria-label="Cycle">${Array.from({ length: maxC }, (_, i) => `<button class="chip ${c === i + 1 ? 'on' : ''}" data-act="planCycle" data-c="${i + 1}">Cycle ${i + 1}</button>`).join('')}</div>
+    <div class="timeline">`;
+  days.forEach((s0) => {
+    const s = resolveSession(s0, D), date = dates[s.key], done = isPlanKeyDone(s.key, D);
+    const isToday = date === t;
+    if (s.type === 'rest') {
+      h += `<div class="tl-item ${isToday ? 'today' : ''}"><div class="daycard ${isToday ? 'today' : ''}" style="min-height:56px">${sessionThumb(s)}<div class="grow"><b>${s.day === 31 ? 'Cycle break' : 'Rest Day'}</b><div class="tiny muted">Day ${s.day}${date ? ' · ' + dayLabel(date) : ''}</div></div></div></div>`;
+      return;
+    }
+    const est = s.type === 'vr' ? { minutes: s.targetMin, kcal: null } : estimateSession(s, D.settings, currentKg());
+    if (isToday && !done && s.type !== 'vr') {
+      h += `<div class="tl-item today"><div class="card accent stack"><div class="spread"><div><div class="tiny muted">${dayLabel(date)}</div><div class="dayno">DAY ${s.day}</div></div>${sessionThumb(s)}</div>
+        <div class="muted small">${esc(s.title)} · ${est.minutes} min · ~${fmtE(est.kcal)}</div>
+        <button class="btn primary block big" data-act="openSession" data-key="${s.key}">START</button></div></div>`;
+      return;
+    }
+    h += `<div class="tl-item ${done ? 'done' : ''} ${isToday ? 'today' : ''}"><button class="daycard ${isToday ? 'today' : ''}" data-act="openSession" data-key="${s.key}">
+      ${sessionThumb(s)}<div class="grow"><div class="spread"><b>Day ${s.day}</b><span>${typePill(s)} ${done ? '<span class="pill done">✓</span>' : ''}</span></div>
+      <div class="small">${esc(s.title)}</div>
+      <div class="tiny muted">${date ? dayLabel(date) + ' · ' : ''}${s.type === 'vr' ? `~${est.minutes} min` : `${est.minutes} min · ${fmtE(est.kcal)}`}${s.changed ? ' · edited' : ''}</div></div></button></div>`;
+  });
+  return h + '</div>' + footer() + '</main>';
+}
+
+/* ---------- Session (day overview / VR / rest) ---------- */
+function openSessionObj() {
+  const o = V.open; if (!o) return null;
+  const k = parseKey(o.key); if (!k) return null;
+  let s = phaseSession(D, k.phase, k.cycle, k.day);
+  if (!s) return null;
+  if (o.fallback) return Object.assign(resolveSession(vrFallback(s), { settings: D.settings, planEdits: {} }), { key: s.key });
+  return resolveSession(s, D);
+}
+function viewSession() {
+  const s = openSessionObj();
+  if (!s) { V.open = null; return viewToday(); }
+  if (s.type === 'vr') return viewVR(s);
+  if (s.type === 'rest') {
+    return `<main class="screen stack"><div class="hero rest"><div class="back"><button class="btn icon" data-act="closeSession" aria-label="Back">${ICON.back}</button></div>
+      <div><div class="dayno">DAY ${s.day}</div><div>${esc(s.title)}</div></div></div>
+      <div class="card"><p>Rest is when your body adapts. Sleep well, keep protein up, and go for an easy walk if you feel like moving.</p></div></main>`;
+  }
+  const est = estimateSession(s, D.settings, currentKg()), done = isPlanKeyDone(s.key, D);
+  const date = planDates()[s.key];
+  let list = '', lastG = null;
+  s.steps.forEach((st, i) => {
+    const ex = LIBRARY[st.id];
+    const g = st.group ? `${st.group}${st.rounds > 1 ? ` · round ${st.round} of ${st.rounds}` : ''}` : null;
+    if (g && g !== lastG) list += `<li class="group-h">${esc(g)}</li>`;
+    if (!g && lastG) list += '<li class="group-h" style="color:var(--muted)">Then</li>';
+    lastG = g;
+    list += `<li><button class="exrow" data-act="exInfo" data-i="${i}"><div class="thumb">${figureSVG(st.id, { animate: false }) || ''}</div>
+      <div class="grow"><div class="nm">${esc(ex.name)}</div><div class="dose">${doseLabel(st)}${ex.equip === 'db' ? ` · ${loadFor(st.id)} kg` : ''}${st.swappedFrom ? ' · low-impact swap' : ''}</div></div></button></li>`;
+  });
+  const heroCls = s.type === 'db' ? 'db' : '';
+  return `<main class="screen" style="padding-bottom:calc(var(--safe-b) + 110px)">
+    <div class="hero ${heroCls}"><div class="back"><button class="btn icon" data-act="closeSession" aria-label="Back">${ICON.back}</button></div>
+      <div class="fig">${figureSVG(s.steps[0] && s.steps[0].id) || ''}</div>
+      <div><div class="tiny" style="opacity:.85">${date ? dayLabel(date) + ' · ' : ''}Cycle ${s.cycle}${V.open.fallback ? ' · instead of VR / game' : ''}</div><div class="dayno">DAY ${s.day}</div><div>${esc(s.title)}</div></div></div>
+    <div class="grid3" style="margin:14px 0">
+      <div class="stat"><b>${energy(est.kcal)}</b><span>${eUnit()} (est.)</span></div><div class="stat"><b>${est.minutes}</b><span>minutes</span></div><div class="stat"><b style="font-size:15px">${esc(s.level)}</b><span>level</span></div></div>
+    <div class="spread"><h2>${s.steps.length} Exercises ${done ? '<span class="pill done">Done</span>' : ''}</h2>
+      ${V.open.fallback ? '' : `<button class="btn icon ghost" data-act="editSession" aria-label="Edit exercises">${ICON.pencil}</button>`}</div>
+    ${s.edited ? '<p class="tiny muted">You\'ve edited this day. Reset it from the pencil menu.</p>' : ''}
+    ${D.settings.lowImpact && s.steps.some((x) => x.swappedFrom) ? '<p class="tiny muted">Low-impact swaps are on.</p>' : ''}
+    <ul class="exlist">${list}</ul>
+    ${footer()}
+  </main>
+  <div class="bottombar"><button class="btn" data-act="workoutSettings">Settings</button><button class="btn primary big" data-act="startWorkout" data-key="${s.key}">${done ? 'Again' : 'Start'}</button></div>`;
+}
+
+/* ---------- Sheets ---------- */
+function renderSheet() {
+  const el = $('#sheet');
+  const s = V.sheet;
+  document.body.style.overflow = s ? 'hidden' : '';
+  if (!s) { el.innerHTML = ''; return; }
+  const body = ({ ex: sheetExercise, edit: sheetEdit, picker: sheetPicker, wsettings: sheetWorkoutSettings, day: sheetDay, confirm: sheetConfirm,
+    import: sheetImport, vrDone: sheetVrDone, phase: sheetPhase, addGame: sheetAddGame })[s.type]();
+  el.innerHTML = `<div class="overlay" data-act="sheetBg"><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${body}</div></div>`;
+}
+function closeSheet() { V.sheet = null; renderSheet(); }
+function sheetExercise() {
+  const s = V.sheet, st = s.steps[s.i], ex = LIBRARY[st.id], tab = s.tab || 'video';
+  let content;
+  if (tab === 'video') {
+    content = `<div class="art" id="ex-art">${figureSVG(ex.id) || `<div class="textcue">${esc(ex.cue)}</div>`}</div>`;
+  } else if (tab === 'muscle') {
+    content = `<div class="stack"><div class="small muted">Focus area</div><div class="row wrap">${ex.focus.map((f) => `<span class="chip">${esc(f)}</span>`).join('')}</div>
+      <div class="small muted">Type: ${esc(ex.area)}${ex.hi ? ' · high impact' : ''}${ex.equip === 'db' ? ' · dumbbells' : ''} · tier ${ex.tier}${ex.seeded ? '' : ' · added exercise'}</div></div>`;
+  } else content = `<p style="font-size:18px">${esc(ex.cue)}</p>${ex.hi && ex.alt ? `<p class="small muted">Low-impact option: ${esc(exName(ex.alt))}.</p>` : ''}`;
+  setTimeout(() => mountMedia(ex.id, 'ex-art'), 0);
+  return `<div class="spread"><h2 style="text-transform:uppercase">${esc(ex.name)}</h2><span class="chip">${doseLabel(st)}</span></div>
+    <div class="tabs" role="tablist">${[['video', 'Video'], ['muscle', 'Muscle'], ['how', 'How-to-do']].map(([k, l]) => `<button role="tab" aria-selected="${tab === k}" data-act="exTab" data-tab="${k}">${l}</button>`).join('')}</div>
+    ${content}
+    <div class="spread" style="margin-top:14px">
+      <button class="btn icon" data-act="exNav" data-d="-1" ${s.i === 0 ? 'disabled' : ''} aria-label="Previous exercise">‹</button>
+      <span class="muted">${s.i + 1}/${s.steps.length}</span>
+      <button class="btn icon" data-act="exNav" data-d="1" ${s.i === s.steps.length - 1 ? 'disabled' : ''} aria-label="Next exercise">›</button></div>
+    <button class="btn primary block" style="margin-top:12px" data-act="closeSheet">Close</button>`;
+}
+// If the user drops their own media/<id>.mp4 or .jpg next to the app, show it instead of the drawing.
+function mountMedia(id, elId) {
+  if (!D.settings.ownMedia) return;
+  const host = document.getElementById(elId); if (!host) return;
+  const v = document.createElement('video');
+  Object.assign(v, { src: `media/${id}.mp4`, muted: true, loop: true, autoplay: true, playsInline: true });
+  v.setAttribute('playsinline', '');
+  v.onloadeddata = () => { host.innerHTML = ''; host.appendChild(v); };
+  v.onerror = () => { const img = new Image(); img.alt = exName(id); img.onload = () => { host.innerHTML = ''; host.appendChild(img); }; img.src = `media/${id}.jpg`; };
+}
+function sheetEdit() {
+  const s = V.sheet;
+  return `<div class="spread"><h2>Edit Day ${parseKey(s.key).day}</h2><button class="btn ghost" data-act="closeSheet">Cancel</button></div>
+    <p class="small muted">Reorder, remove, swap or change targets. Only this day changes.</p>
+    <ul class="exlist">${s.steps.map((st, i) => `<li style="padding:8px 0"><div class="spread"><div class="grow"><b>${esc(exName(st.id))}</b>${st.group ? `<div class="tiny muted">${esc(st.group)}${st.rounds > 1 ? ' · round ' + st.round : ''}</div>` : ''}</div>
+      <div class="row"><button class="btn icon" data-act="editDose" data-i="${i}" data-d="-1" aria-label="Less">−</button><span style="min-width:52px;text-align:center">${doseLabel(st)}</span><button class="btn icon" data-act="editDose" data-i="${i}" data-d="1" aria-label="More">+</button></div></div>
+      <div class="row" style="margin-top:6px"><button class="btn icon" data-act="editMove" data-i="${i}" data-d="-1" aria-label="Move up" ${i === 0 ? 'disabled' : ''}>↑</button><button class="btn icon" data-act="editMove" data-i="${i}" data-d="1" aria-label="Move down" ${i === s.steps.length - 1 ? 'disabled' : ''}>↓</button>
+      <button class="btn" data-act="editSwap" data-i="${i}">Swap</button><button class="btn danger" data-act="editRemove" data-i="${i}">Remove</button></div></li>`).join('')}</ul>
+    <button class="btn block" data-act="editAdd" style="margin-top:10px">+ Add exercise</button>
+    <div class="grid2" style="margin-top:12px"><button class="btn danger" data-act="editReset">Reset to plan</button><button class="btn primary" data-act="editSave">Save</button></div>`;
+}
+function sheetPicker() {
+  const s = V.sheet, q = (s.q || '').toLowerCase(), area = s.area || 'all';
+  const areas = ['all', 'core', 'cardio', 'legs', 'upper', 'back', 'strength', 'stretch', 'mobility', 'full'];
+  const list = Object.values(LIBRARY).filter((ex) => (area === 'all' || ex.area === area) && (!q || ex.name.toLowerCase().includes(q) || ex.focus.join(' ').includes(q)));
+  return `<div class="spread"><h2>${s.mode === 'swap' ? 'Swap exercise' : 'Add exercise'}</h2><button class="btn ghost" data-act="pickerBack">Back</button></div>
+    <input type="text" placeholder="Search" data-field="picker.q" value="${esc(s.q || '')}" style="margin:8px 0" aria-label="Search exercises">
+    <div class="row wrap" style="margin-bottom:8px">${areas.map((a) => `<button class="chip ${a === area ? 'on' : ''}" data-act="pickerArea" data-a="${a}">${a}</button>`).join('')}</div>
+    <ul class="exlist">${list.map((ex) => `<li><button class="exrow" data-act="pickerPick" data-id="${ex.id}"><div class="thumb">${figureSVG(ex.id, { animate: false })}</div><div class="grow"><div class="nm">${esc(ex.name)}</div><div class="dose">${esc(ex.focus.join(', '))}</div></div></button></li>`).join('')}</ul>`;
+}
+function sheetWorkoutSettings() {
+  const st = D.settings;
+  return `<h2>Workout settings</h2><div class="stack" style="margin-top:10px">
+    ${numField('Rest between exercises (s)', 'settings.rest', st.rest, 0, 120)}
+    ${toggle('Hands-free (rep moves advance on their own)', 'settings.handsFree', st.handsFree)}
+    ${numField('Hands-free seconds per rep', 'settings.secPerRep', st.secPerRep, 1, 6, 0.5)}
+    ${toggle('Low-impact swaps', 'settings.lowImpact', st.lowImpact)}
+    ${toggle('Voice', 'settings.voice.on', st.voice.on)}
+    ${toggle('Beeps', 'settings.beeps', st.beeps)}
+    <button class="btn primary block" data-act="closeSheetRender">Done</button></div>`;
+}
+function sheetConfirm() {
+  const s = V.sheet;
+  return `<h2>${esc(s.title)}</h2><p>${esc(s.text)}</p><div class="grid2"><button class="btn" data-act="closeSheet">Cancel</button>
+    <button class="btn ${s.danger ? 'danger' : 'primary'}" data-act="confirmYes">${esc(s.yes || 'OK')}</button></div>`;
+}
+function confirmBox(title, text, yes, fn, danger) { V.sheet = { type: 'confirm', title, text, yes, fn, danger }; renderSheet(); }
+const numField = (label, path, v, min, max, step) => `<label class="field"><span>${label}</span><input type="number" inputmode="decimal" min="${min}" max="${max}" step="${step || 1}" data-field="${path}" value="${v == null ? '' : v}"></label>`;
+const toggle = (label, path, v) => `<label class="toggle"><span>${label}</span><input type="checkbox" data-field="${path}" ${v ? 'checked' : ''}></label>`;
+
+function sheetDay() {
+  const date = V.sheet.date, e = D.days[date] || {}, so = sessionOn(date, D), ws = workoutsOn(date, D);
+  let plan = 'Before the plan started';
+  if (so.paused) plan = 'Moved day (plan shifted)';
+  else if (so.session) plan = `Cycle ${so.session.cycle} · Day ${so.session.day} · ${so.session.title}`;
+  const canMark = so.session && isTraining(so.session) && !isPlanKeyDone(so.session.key, D) && date <= today();
+  return `<div class="spread"><h2>${DateX.pretty(date, { weekday: 'long', month: 'long' })}</h2><button class="btn ghost" data-act="closeSheetRender">Close</button></div>
+    <p class="small muted">${esc(plan)}</p>
+    <div class="stack">
+      ${ws.map((w) => `<div class="card flat spread"><div><b>${esc(w.title || (w.type === 'vr' ? 'VR / game session' : 'Workout'))}</b><div class="tiny muted">${w.durationSec ? Math.round(w.durationSec / 60) + ' min · ' : ''}${w.kcal ? '~' + fmtE(w.kcal) + ' · ' : ''}${w.effort ? 'effort ' + w.effort + '/10' : w.manual ? 'marked done' : ''}${w.vr ? ' · ' + allGames(D, true).filter((g) => w.vr[g.id]).map((g) => `${g.name} ${w.vr[g.id]} min`).join(', ') : ''}</div></div>
+        <button class="btn danger" data-act="delWorkout" data-id="${w.id}">Delete</button></div>`).join('')}
+      ${canMark ? `<button class="btn" data-act="dayDone" data-date="${date}">Mark Day ${so.session.day} as done</button>` : ''}
+      <div class="grid2">
+        <label class="field"><span>Weight (kg)</span><input type="number" inputmode="decimal" step="0.1" data-field="day.weight" data-date="${date}" value="${e.weight != null ? e.weight : ''}"></label>
+        <label class="field"><span>Waist (cm)</span><input type="number" inputmode="decimal" step="0.5" data-field="day.waist" data-date="${date}" value="${e.waist != null ? e.waist : ''}"></label>
+      </div>
+      <label class="check"><input type="checkbox" data-field="day.diet" data-date="${date}" ${e.diet ? 'checked' : ''}><b>Diet on track</b></label>
+      <div><div class="small muted">Energy</div><div class="seg">${[1, 2, 3, 4, 5].map((n) => `<button data-act="setEnergy" data-date="${date}" data-v="${n}" class="${e.energy === n ? 'on' : ''}" aria-pressed="${e.energy === n}">${n}</button>`).join('')}</div></div>
+      <label class="field"><span>Note</span><textarea data-field="day.note" data-date="${date}">${esc(e.note || '')}</textarea></label>
+    </div>`;
+}
+
+/* ---------- VR day ---------- */
+function vrState(key) {
+  if (!D.vrActive || D.vrActive.key !== key) D.vrActive = { key, games: {} };
+  allGames(D).forEach((g) => { if (!D.vrActive.games[g.id]) D.vrActive.games[g.id] = { acc: 0, since: null }; });
+  return D.vrActive;
+}
+function vrMs(g) { return g.acc + (g.since ? Date.now() - g.since : 0); }
+function mmss(ms) { const s = Math.floor(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }
+function viewVR(s) {
+  const st = D.vrActive && D.vrActive.key === s.key ? D.vrActive : null, done = isPlanKeyDone(s.key, D);
+  const date = planDates()[s.key];
+  return `<main class="screen stack">
+    <div class="hero vr"><div class="back"><button class="btn icon" data-act="closeSession" aria-label="Back">${ICON.back}</button></div>
+      <div class="fig" style="color:#fff">${ICON.vr}</div>
+      <div><div class="tiny" style="opacity:.85">${date ? dayLabel(date) + ' · ' : ''}Cycle ${s.cycle}</div><div class="dayno">DAY ${s.day}</div><div>VR / game · your choice</div></div></div>
+    ${done ? '<div class="card"><span class="pill done">Done</span> Logged. Good session.</div>' : ''}
+    <div class="card stack"><h2>What to aim for</h2>
+      <p>About <b>${s.targetMin} minutes</b> in total, at an effort of around <b>6–7 out of 10</b>: breathing hard, but you could still talk in short sentences.</p>
+      <p class="small muted">Any game or mix of games below. Split the time however you like and start the timer for whichever one you're playing.</p></div>
+    ${allGames(D).map((g) => { const gs = st && st.games[g.id] ? st.games[g.id] : { acc: 0, since: null }; return `<div class="card spread"><div><b>${esc(g.name)}</b><div class="tiny muted">${esc(g.kind)}</div>
+      <div style="font-size:30px;font-weight:800;font-variant-numeric:tabular-nums" id="vr-t-${g.id}">${mmss(vrMs(gs))}</div></div>
+      <div class="stack" style="min-width:110px"><button class="btn ${gs.since ? '' : 'primary'}" data-act="vrToggle" data-g="${g.id}">${gs.since ? 'Pause' : gs.acc ? 'Resume' : 'Start'}</button>
+      ${gs.acc || gs.since ? `<button class="btn ghost small" data-act="vrReset" data-g="${g.id}">Reset</button>` : ''}</div></div>`; }).join('')}
+    <button class="btn block" data-act="addGameOpen">+ Add a game or activity</button>
+    <button class="btn good block big" data-act="vrDone">Done: log it</button>
+    <button class="btn ghost block" data-act="vrFallback">Do a bodyweight version instead</button>
+    <p class="tiny muted">The timers keep counting if your phone locks or you close the app. Energy burned is a rough estimate from MET values in Settings.</p>
+    ${footer()}</main>`;
+}
+function vrTick() {
+  if (!D || !D.vrActive) return;
+  allGames(D).forEach((g) => { const el = document.getElementById('vr-t-' + g.id), gs = D.vrActive.games[g.id]; if (el && gs) el.textContent = mmss(vrMs(gs)); });
+}
+function sheetVrDone() {
+  const s = V.sheet, kcal = vrKcal(s.min, D, currentKg());
+  return `<h2>Log VR / game session</h2><div class="stack" style="margin-top:10px">
+    ${allGames(D).map((g) => `<label class="field"><span>${esc(g.name)} (minutes)</span><input type="number" inputmode="numeric" min="0" max="300" data-field="vr.${g.id}" value="${s.min[g.id] || ''}"></label>`).join('')}
+    <div><div class="small muted">Effort (1 easy – 10 all-out)</div><div class="seg" style="flex-wrap:wrap">${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => `<button style="flex:1 0 17%" data-act="vrEffort" data-v="${n}" class="${s.effort === n ? 'on' : ''}">${n}</button>`).join('')}</div></div>
+    <p>Estimated <b id="vr-kcal">${fmtE(kcal)}</b> <span class="tiny muted">(MET × body weight × time; a rough estimate)</span></p>
+    <div class="grid2"><button class="btn" data-act="closeSheet">Cancel</button><button class="btn primary" data-act="vrSave">Save</button></div></div>`;
+}
+
+/* ---------- Audio, vibration, wake lock, voice ---------- */
+const Sound = {
+  ctx: null,
+  unlock() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!this.ctx && AC) this.ctx = new AC();
+      if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+    } catch (e) { /* no audio */ }
+  },
+  beep(freq, ms) {
+    if (!D.settings.beeps || !this.ctx) return;
+    try {
+      const o = this.ctx.createOscillator(), g = this.ctx.createGain(), t = this.ctx.currentTime;
+      o.frequency.value = freq || 880; o.connect(g); g.connect(this.ctx.destination);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + (ms || 150) / 1000);
+      o.start(t); o.stop(t + (ms || 150) / 1000 + 0.02);
+    } catch (e) { /* ignore */ }
+  },
+};
+function buzz(p) { if (D.settings.vibrate && navigator.vibrate) { try { navigator.vibrate(p); } catch (e) { /* ignore */ } } }
+const Wake = {
+  lock: null,
+  async on() { try { if ('wakeLock' in navigator) this.lock = await navigator.wakeLock.request('screen'); } catch (e) { this.lock = null; } },
+  off() { try { if (this.lock) this.lock.release(); } catch (e) { /* ignore */ } this.lock = null; },
+};
+const Voice = {
+  available: () => 'speechSynthesis' in window,
+  list() { return Voice.available() ? speechSynthesis.getVoices() : []; },
+  pick() {
+    const vs = Voice.list(), want = D.settings.voice.voiceURI;
+    let v = want && vs.find((x) => x.voiceURI === want);
+    if (!v) { const en = vs.filter((x) => /^en/i.test(x.lang)); v = en.find((x) => x.localService && x.default) || en.find((x) => x.localService) || vs.find((x) => x.localService) || null; }
+    return v;
+  },
+  // kind: which announcement setting gates this (start, rest, halfway, countdown, complete).
+  say(text, kind) {
+    const vs = D.settings.voice;
+    if (!vs.on || !Voice.available() || (kind && vs[kind] === false)) return;
+    try {
+      speechSynthesis.cancel(); // never overlap
+      const u = new SpeechSynthesisUtterance(text), v = Voice.pick();
+      if (v) { u.voice = v; u.lang = v.lang; }
+      u.rate = vs.rate; u.volume = vs.volume;
+      speechSynthesis.speak(u);
+    } catch (e) { /* ignore */ }
+  },
+  stop() { try { if (Voice.available()) speechSynthesis.cancel(); } catch (e) { /* ignore */ } },
+};
+
+/* ---------- Guided player ---------- */
+let P = null;
+function startWorkout(key) {
+  if (!V.open || V.open.key !== key) V.open = { key };
+  const s = openSessionObj();
+  if (!s || !s.steps.length) return;
+  Sound.unlock();
+  P = { s, i: 0, phase: 'ready', left: D.settings.getReady, dur: D.settings.getReady, paused: false, startedAt: Date.now(), activeMs: 0,
+    last: performance.now(), done: new Set(), effort: null, loads: {} };
+  s.steps.forEach((st) => { if (LIBRARY[st.id].equip === 'db') P.loads[st.id] = loadFor(st.id); });
+  const f = s.steps[0];
+  // First utterance happens inside the Start tap, which iOS requires.
+  if (P.left > 0) Voice.say(`Get ready. First up: ${spokenName(LIBRARY[f.id])}, ${spokenTarget(f)}`, 'start'); else beginWork(0);
+  Wake.on();
+  P.timer = setInterval(tick, 200);
+  renderPlayer();
+}
+function tick() {
+  if (!P) return;
+  const now = performance.now(), dt = Math.min(1, (now - P.last) / 1000);
+  P.last = now;
+  if (P.paused || P.phase === 'done' || P.confirmEnd) return;
+  P.activeMs += dt * 1000;
+  if (P.left == null) return; // rep move, waiting for Done
+  P.left -= dt;
+  if (P.phase === 'work' && P.halfAt && !P.spokeHalf && P.left <= P.halfAt) { P.spokeHalf = true; Voice.say('Halfway', 'halfway'); }
+  const secs = Math.ceil(P.left);
+  if (P.left > 0 && secs <= 3 && secs !== P.lastCount) {
+    P.lastCount = secs; Sound.beep(660, 120);
+    if (P.phase === 'work' || P.dur > 6) Voice.say(String(secs), 'countdown');
+  }
+  if (P.left <= 0) { advance(true); return; }
+  updatePlayerTime();
+}
+function beginWork(i) {
+  const st = P.s.steps[i], ex = LIBRARY[st.id];
+  Object.assign(P, { i, phase: 'work', lastCount: null, spokeHalf: false });
+  if (st.sec != null) { P.left = P.dur = st.sec; P.halfAt = st.sec >= 30 ? st.sec / 2 : null; }
+  else if (D.settings.handsFree) { P.left = P.dur = st.reps * D.settings.secPerRep; P.halfAt = null; }
+  else { P.left = P.dur = null; P.halfAt = null; }
+  Voice.say(`${spokenName(ex)}, ${spokenTarget(st)}${ex.equip === 'db' ? `, ${P.loads[ex.id]} kilos` : ''}`, 'start');
+  Sound.beep(880, 220); buzz(120);
+  renderPlayer();
+}
+// completed=true when the step finished (time ran out or Done), false when skipped.
+function advance(completed) {
+  P.lastCount = null;
+  if (P.phase === 'ready' || P.phase === 'rest') { beginWork(P.phase === 'ready' ? 0 : P.i + 1); return; }
+  if (completed) P.done.add(P.i);
+  Sound.beep(990, 260); buzz(200);
+  if (P.i >= P.s.steps.length - 1) { finishPlayer(); return; }
+  const r = restFor(P.s, P.s.steps[P.i], D.settings);
+  if (r > 0) {
+    const n = P.s.steps[P.i + 1];
+    Object.assign(P, { phase: 'rest', left: r, dur: r });
+    Voice.say(`Rest. Next up: ${spokenName(LIBRARY[n.id])}, ${spokenTarget(n)}`, 'rest');
+    renderPlayer();
+  } else beginWork(P.i + 1);
+}
+function finishPlayer() {
+  clearInterval(P.timer);
+  P.phase = 'done';
+  Wake.off();
+  const est = estimateSession(P.s, D.settings, currentKg());
+  P.kcal = Math.round(est.kcal * (P.done.size / P.s.steps.length));
+  Voice.say(P.done.size === P.s.steps.length ? 'Workout complete. Nice work.' : 'Workout finished.', 'complete');
+  renderPlayer();
+}
+function closePlayer() { if (P) clearInterval(P.timer); Voice.stop(); Wake.off(); P = null; renderPlayer(); render(); }
+function updatePlayerTime() {
+  const el = document.getElementById('p-time');
+  if (el && P.left != null) el.textContent = P.phase === 'work' && P.s.steps[P.i].sec == null ? `${Math.max(0, Math.ceil(P.left))}s` : Math.max(0, Math.ceil(P.left));
+}
+function renderPlayer() {
+  const host = $('#player');
+  if (!P) { host.innerHTML = ''; return; }
+  const n = P.s.steps.length;
+  if (P.phase === 'done') { host.innerHTML = playerDone(); return; }
+  const resting = P.phase !== 'work';
+  const idx = P.phase === 'ready' ? 0 : P.phase === 'rest' ? P.i + 1 : P.i;
+  const st = P.s.steps[idx], ex = LIBRARY[st.id], next = P.s.steps[idx + 1];
+  const pos = `${idx + 1}/${n}`;
+  const grp = st.group ? `${st.group}${st.rounds > 1 ? ` · round ${st.round}/${st.rounds}` : ''}` : '';
+  let target, sub, controls;
+  if (resting) {
+    target = `<div class="ptarget" id="p-time" aria-live="off">${Math.ceil(P.left)}</div>`;
+    sub = `<div class="pnext">${P.phase === 'ready' ? 'First up' : 'Next up'}: <b>${esc(ex.name)}</b> ${doseLabel(st)}</div>`;
+    controls = `<div class="pcontrols"><button class="btn" data-act="pAdd10">+10 s</button><button class="btn" data-act="pPause">${P.paused ? 'Resume' : 'Pause'}</button><button class="btn primary" data-act="pSkip">Skip</button></div>`;
+  } else {
+    const timed = st.sec != null;
+    target = timed ? `<div class="ptarget" id="p-time">${Math.ceil(P.left)}</div>`
+      : `<div class="ptarget">${doseLabel(st)}</div>${P.left != null ? `<div class="pnext">hands-free: <span id="p-time">${Math.ceil(P.left)}s</span></div>` : ''}`;
+    sub = `<div class="pnext">${next ? `Next: ${esc(exName(next.id))} ${doseLabel(next)}` : 'Last one!'}</div>`;
+    controls = `${!timed ? '<button class="btn good block big" data-act="pDone" style="margin-top:10px">DONE</button>' : ''}
+      <div class="pcontrols"><button class="btn" data-act="pPrev" ${P.i === 0 ? 'disabled' : ''}>‹ Prev</button><button class="btn" data-act="pPause">${P.paused ? 'Resume' : 'Pause'}</button><button class="btn" data-act="pSkip">Skip ›</button></div>`;
+  }
+  const kg = ex.equip === 'db' ? `<div class="pnext">${P.loads[ex.id]} kg</div>` : '';
+  host.innerHTML = `<div class="player ${resting ? 'rest' : ''}" role="dialog" aria-label="Workout player">
+    <div class="spread"><button class="btn ghost" data-act="pFinish" aria-label="End workout">✕ End</button><b>${pos}</b><span class="tiny" style="min-width:60px;text-align:right">${esc(grp)}</span></div>
+    <div class="pbar" style="margin-top:8px"><i style="width:${(P.done.size / n) * 100}%"></i></div>
+    <div class="pfig">${figureSVG(st.id) || `<div class="textcue">${esc(ex.cue)}</div>`}</div>
+    <div class="pname">${esc(resting ? (P.phase === 'ready' ? 'Get ready' : 'Rest') : ex.name)}</div>
+    ${target}${kg}${sub}
+    ${P.paused ? `<div class="card" style="margin-top:8px;text-align:center">${P.autoPaused ? 'Paused while the app was in the background.' : 'Paused'}</div>` : ''}
+    ${P.confirmEnd ? `<div class="card stack" style="margin-top:8px"><b>End the workout now?</b><div class="grid2"><button class="btn" data-act="pEndNo">Keep going</button><button class="btn danger" data-act="pEndYes">End</button></div></div>` : controls}
+  </div>`;
+}
+function playerDone() {
+  const n = P.s.steps.length, full = P.done.size === n;
+  const ids = Object.keys(P.loads);
+  return `<div class="player" role="dialog" aria-label="Workout complete" style="overflow:auto">
+    <h1 style="margin-top:12px">${full ? 'Workout complete' : 'Finished early'}</h1>
+    <p class="muted">${full ? 'Every exercise done. Good work.' : `You did ${P.done.size} of ${n}. That still counts.`}</p>
+    <div class="grid3" style="margin:12px 0"><div class="stat"><b>${mmss(P.activeMs)}</b><span>time</span></div><div class="stat"><b>${energy(P.kcal)}</b><span>${eUnit()} (est.)</span></div><div class="stat"><b>${P.done.size}/${n}</b><span>exercises</span></div></div>
+    <div class="small muted" style="margin-bottom:6px">How hard was it? (1 easy – 10 all-out)</div>
+    <div class="seg" style="flex-wrap:wrap">${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => `<button style="flex:1 0 17%" data-act="pEffort" data-v="${v}" class="${P.effort === v ? 'on' : ''}">${v}</button>`).join('')}</div>
+    ${ids.length ? `<h3 style="margin-top:16px">Dumbbell weight used</h3><p class="tiny muted">Rule of thumb: add reps first. Once you hit ${strengthReps(P.s.focus).hi} reps comfortably, go up a step.</p>
+      ${ids.map((id) => { const prev = D.loads[id]; const hint = prev && prev.hitTop ? ` · last time you hit ${prev.reps} reps, try ${prev.kg + D.settings.dumbbellStep} kg` : '';
+        return `<div class="spread" style="margin:6px 0"><div class="grow"><b>${esc(exName(id))}</b><div class="tiny muted">${hint}</div></div>
+        <div class="row"><button class="btn icon" data-act="pLoad" data-id="${id}" data-d="-1" aria-label="Less weight">−</button><b style="min-width:56px;text-align:center">${P.loads[id]} kg</b><button class="btn icon" data-act="pLoad" data-id="${id}" data-d="1" aria-label="More weight">+</button></div></div>`; }).join('')}` : ''}
+    <div class="grid2" style="margin-top:18px"><button class="btn" data-act="pDiscard">Don't log</button><button class="btn primary" data-act="pSave">Save</button></div>
+  </div>`;
+}
+
+/* ---------- Weight ---------- */
+function viewWeight() {
+  const t = today(), pr = cached('progress', () => progress(D, t)), caution = paceCaution(pr);
+  const list = pr.series.slice().reverse();
+  const shown = V.showAllWeights ? list : list.slice(0, 10);
+  const waist = Object.entries(D.days).filter(([, e]) => e.waist != null).map(([date, e]) => ({ date, v: e.waist })).sort((a, b) => (a.date < b.date ? -1 : 1));
+  const bmi = D.profile.heightCm && pr.trend ? pr.trend / Math.pow(D.profile.heightCm / 100, 2) : null;
+  return `<main class="screen stack">
+    <div class="topbar"><h1>Weight</h1>${flameHTML()}</div>
+    ${milestoneCard(pr)}${snapshotCard(pr)}
+    <div class="card stack"><h2>Log</h2>
+      <label class="field"><span>Date</span><input type="date" id="w-date" value="${t}" max="${t}"></label>
+      <div class="grid2"><label class="field"><span>Weight (kg)</span><input type="number" inputmode="decimal" step="0.1" id="w-kg"></label>
+      <label class="field"><span>Waist (cm, weekly)</span><input type="number" inputmode="decimal" step="0.5" id="w-waist" placeholder="optional"></label></div>
+      <button class="btn primary block" data-act="addWeight">Save</button></div>
+    <div class="card stack"><div class="spread"><h2>Trend</h2><div class="row"><button class="chip ${V.chartRange === 'all' ? 'on' : ''}" data-act="chartRange" data-r="all">All</button><button class="chip ${V.chartRange === '8w' ? 'on' : ''}" data-act="chartRange" data-r="8w">8 weeks</button></div></div>
+      <div class="chart">${weightChart(pr, V.chartRange)}</div>
+      <div class="legend"><span><i style="background:var(--muted)"></i>weigh-ins</span><span><i style="background:var(--blue)"></i>7-day average</span><span><i style="background:var(--green)"></i>goal line</span><span><i style="background:var(--orange)"></i>projection</span></div></div>
+    <div class="card stack"><div class="spread"><h2>Pace</h2><span class="pill">${esc(pr.status.label)}</span></div>
+      ${pr.mode === 'maintain'
+        ? `<div class="stat"><b>${pr.actual != null ? (pr.actual > 0 ? '−' : '+') + Math.abs(pr.actual).toFixed(2) : '–'}</b><span>kg/week change, last 3 weeks</span></div>`
+        : `<div class="grid2"><div class="stat"><b>${pr.actual != null ? pr.actual.toFixed(2) : '–'}</b><span>kg/week lost, last 3 weeks</span></div>
+      <div class="stat"><b>${pr.required != null ? pr.required.toFixed(2) : '–'}</b><span>kg/week needed</span></div></div>`}
+      <p class="small">${esc(pr.status.line)}</p>
+      ${pr.projected ? `<p class="small">At this rate you'd reach ${fmtKg(pr.goal)} kg around <b>${DateX.pretty(pr.projected, { year: 'numeric' })}</b>${pr.goalDate ? ` (goal: ${DateX.pretty(pr.goalDate, { year: 'numeric' })})` : ''}.</p>` : ''}
+      ${caution ? `<p class="small" style="color:var(--orange)">${esc(caution)}</p>` : ''}
+      ${bmi ? `<p class="tiny muted">BMI ${bmi.toFixed(1)} (a rough guide only)</p>` : ''}</div>
+    ${waist.length ? `<div class="card stack"><div class="spread"><h2>Waist</h2><b>${waist[waist.length - 1].v} cm</b></div>${sparkline(waist)}
+      <p class="tiny muted">${waist.length > 1 ? `${(waist[waist.length - 1].v - waist[0].v).toFixed(1)} cm since ${DateX.pretty(waist[0].date)}` : 'Log it weekly to see a trend.'}</p></div>` : ''}
+    <div class="card"><h2>Entries</h2>${list.length ? `<ul class="exlist">${shown.map((p, i) => { const prev = list[V.showAllWeights ? i + 1 : i + 1]; const d = prev ? p.kg - prev.kg : null;
+      return `<li><button class="exrow" data-act="openDay" data-date="${p.date}" style="min-height:48px"><div class="grow">${DateX.pretty(p.date, { weekday: 'short', year: 'numeric' })}</div><b>${p.kg.toFixed(1)} kg</b><span class="tiny muted" style="min-width:48px;text-align:right">${d == null ? '' : (d > 0 ? '+' : '') + d.toFixed(1)}</span></button></li>`; }).join('')}</ul>
+      ${list.length > 10 ? `<button class="btn ghost block" data-act="toggleWeights">${V.showAllWeights ? 'Show fewer' : `Show all ${list.length}`}</button>` : ''}` : '<p class="muted small">No weigh-ins yet. Morning, after the bathroom, before eating gives the most consistent numbers.</p>'}</div>
+    ${footer()}</main>`;
+}
+function weightChart(pr, range) {
+  const pts = pr.series, t = today();
+  if (!pts.length) return '<p class="muted small" style="padding:30px 0;text-align:center">Log your first weight to see the chart.</p>';
+  const W = 340, H = 210, L = 34, Rm = 8, T = 10, B = 22;
+  let x0, x1;
+  if (range === '8w') { x0 = DateX.add(t, -56); x1 = t; } else {
+    x0 = [planStart(D), pts[0].date].filter(Boolean).sort()[0];
+    x1 = [D.profile.goalDate, t, pts[pts.length - 1].date].filter(Boolean).sort().pop();
+    if (pr.projected && pr.projected > x1 && DateX.diff(x1, pr.projected) < 120) x1 = pr.projected;
+    // Leave room ahead for a maintenance band or a phase that has only just started.
+    if (pr.mode === 'maintain' || (D.phases.length && DateX.diff(D.profile.startDate, x1) < 28)) {
+      const ahead = DateX.add(t > D.profile.startDate ? t : D.profile.startDate, 28);
+      if (ahead > x1) x1 = ahead;
+    }
+  }
+  const n0 = DateX.num(x0), n1 = Math.max(DateX.num(x1), n0 + 7);
+  const vis = pts.filter((p) => p.date >= x0 && p.date <= x1), visMa = pr.ma.filter((p) => p.date >= x0 && p.date <= x1);
+  const ys = vis.map((p) => p.kg);
+  if (pr.goal != null && range === 'all') ys.push(pr.goal);
+  if (pr.startW != null && range === 'all') ys.push(pr.startW);
+  if (!ys.length) ys.push(pts[pts.length - 1].kg);
+  const y0 = Math.floor(Math.min(...ys) - 1), y1 = Math.ceil(Math.max(...ys) + 1);
+  const sx = (d) => (L + ((DateX.num(d) - n0) / (n1 - n0)) * (W - L - Rm)).toFixed(1);
+  const sy = (kg) => (T + ((y1 - kg) / (y1 - y0)) * (H - T - B)).toFixed(1);
+  let g = '';
+  const step = Math.max(1, Math.round((y1 - y0) / 4));
+  for (let v = y0; v <= y1; v += step) g += `<line class="axis" x1="${L}" x2="${W - Rm}" y1="${sy(v)}" y2="${sy(v)}" opacity=".5"/><text x="${L - 4}" y="${+sy(v) + 3}" text-anchor="end">${v}</text>`;
+  // month ticks
+  let m = x0.slice(0, 7) + '-01'; if (m < x0) m = DateX.add(DateX.add(m, 32).slice(0, 7) + '-01', 0);
+  for (let i = 0; i < 24 && m <= x1; i++, m = DateX.add(m, 32).slice(0, 7) + '-01') {
+    g += `<line class="axis" x1="${sx(m)}" x2="${sx(m)}" y1="${T}" y2="${H - B}" opacity=".35"/><text x="${sx(m)}" y="${H - 6}" text-anchor="middle">${DateX.pretty(m, { month: 'short', day: undefined })}</text>`;
+  }
+  // Earlier phases: faint goal lines and a marker where each new phase began.
+  D.phases.forEach((ph) => {
+    if (ph.mode !== 'maintain' && ph.goalWeight != null && ph.goalDate && ph.startWeight != null) {
+      g += `<line x1="${sx(ph.startDate)}" y1="${sy(ph.startWeight)}" x2="${sx(ph.goalDate)}" y2="${sy(ph.goalWeight)}" stroke="var(--green)" stroke-width="1.5" stroke-dasharray="5 4" opacity=".35"/>`;
+    }
+  });
+  if (D.phases.length && D.profile.startDate >= x0 && D.profile.startDate <= x1) {
+    g += `<line x1="${sx(D.profile.startDate)}" x2="${sx(D.profile.startDate)}" y1="${T}" y2="${H - B}" stroke="var(--purple)" stroke-width="1.5" stroke-dasharray="2 3"/><text x="${+sx(D.profile.startDate) - 3}" y="${T + 9}" text-anchor="end">phase ${currentPhaseNo(D)}</text>`;
+  }
+  if (pr.mode === 'maintain' && pr.goal != null && D.profile.startDate) {
+    const a = D.profile.startDate > x0 ? D.profile.startDate : x0;
+    g += `<rect x="${sx(a)}" y="${sy(pr.goal + 1)}" width="${(sx(x1) - sx(a)).toFixed(1)}" height="${(sy(pr.goal - 1) - sy(pr.goal + 1)).toFixed(1)}" fill="var(--green)" opacity=".15"/>`;
+  } else if (pr.goal != null && pr.goalDate && pr.startW != null && D.profile.startDate) {
+    g += `<line x1="${sx(D.profile.startDate)}" y1="${sy(pr.startW)}" x2="${sx(pr.goalDate)}" y2="${sy(pr.goal)}" stroke="var(--green)" stroke-width="2" stroke-dasharray="5 4"/>`;
+  }
+  const r = vis.length > 60 ? 1.6 : vis.length > 25 ? 2.4 : 3.2;
+  g += vis.map((p) => `<circle cx="${sx(p.date)}" cy="${sy(p.kg)}" r="${r}" fill="var(--muted)" opacity=".75"/>`).join('');
+  if (visMa.length > 1) g += `<polyline points="${visMa.map((p) => sx(p.date) + ',' + sy(p.kg)).join(' ')}" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linejoin="round"/>`;
+  if (pr.projected && pr.projected <= x1 && pr.ma.length) {
+    const last = pr.ma[pr.ma.length - 1];
+    g += `<line x1="${sx(last.date)}" y1="${sy(last.kg)}" x2="${sx(pr.projected)}" y2="${sy(pr.goal)}" stroke="var(--orange)" stroke-width="2" stroke-dasharray="3 4"/>`;
+  }
+  const lbl = `Weight chart: ${vis.length} weigh-ins, latest ${pts[pts.length - 1].kg} kg`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(lbl)}"><defs><clipPath id="clip"><rect x="${L}" y="0" width="${W - L - Rm}" height="${H - B}"/></clipPath></defs>${g.replace(/<(line|polyline|circle)(?![^>]*class="axis")/g, '<$1 clip-path="url(#clip)"')}</svg>`;
+}
+function sparkline(pts) {
+  if (pts.length < 2) return '';
+  const W = 300, H = 50, vs = pts.map((p) => p.v), lo = Math.min(...vs), hi = Math.max(...vs) || lo + 1;
+  const n0 = DateX.num(pts[0].date), n1 = Math.max(n0 + 1, DateX.num(pts[pts.length - 1].date));
+  const xy = pts.map((p) => `${(4 + ((DateX.num(p.date) - n0) / (n1 - n0)) * (W - 8)).toFixed(1)},${(4 + ((hi - p.v) / (hi - lo || 1)) * (H - 8)).toFixed(1)}`);
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:50px" role="img" aria-label="Waist trend"><polyline points="${xy.join(' ')}" fill="none" stroke="var(--blue)" stroke-width="2.5"/></svg>`;
+}
+
+/* ---------- Calendar ---------- */
+function viewCalendar() {
+  const t = today(), m = V.calMonth || t.slice(0, 7);
+  const first = m + '-01', next = DateX.add(first, 32).slice(0, 7) + '-01', lastDay = DateX.add(next, -1);
+  const gs = DateX.mondayOf(first), cells = Math.ceil((DateX.diff(gs, lastDay) + 1) / 7) * 7;
+  const title = DateX.pretty(first, { month: 'long', year: 'numeric', day: undefined });
+  let g = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => `<div class="dow">${d}</div>`).join('');
+  for (let i = 0; i < cells; i++) {
+    const d = DateX.add(gs, i), so = sessionOn(d, D), e = D.days[d] || {};
+    const done = workoutsOn(d, D).length > 0, sess = so.session;
+    const dots = [];
+    if (done) dots.push('d-done');
+    else if (sess && sess.type === 'vr') dots.push('d-vr');
+    else if (so.paused || (sess && sess.type === 'rest')) dots.push('d-rest');
+    else if (sess && isTraining(sess) && d < t) dots.push('d-miss');
+    if (e.diet) dots.push('d-diet');
+    if (e.weight != null) dots.push('d-wt');
+    const lbl = [DateX.pretty(d, { weekday: 'long', month: 'long' }), sess ? `plan day ${sess.day}` : '', done ? 'workout done' : '', e.diet ? 'diet on track' : '', e.weight != null ? `weight ${e.weight}` : ''].filter(Boolean).join(', ');
+    g += `<button class="${d.slice(0, 7) !== m ? 'out' : ''} ${d === t ? 'today' : ''}" data-act="openDay" data-date="${d}" aria-label="${esc(lbl)}">
+      <span>${+d.slice(8)}</span><span class="tiny muted">${sess && sess.type !== 'rest' ? (sess.type === 'vr' ? 'Game' : 'D' + sess.day) : ''}</span><span class="dots">${dots.map((c) => `<i class="dot ${c}"></i>`).join('')}</span></button>`;
+  }
+  return `<main class="screen stack">
+    <div class="topbar"><h1>Calendar</h1>${flameHTML()}</div>
+    <div class="spread"><button class="btn icon" data-act="calNav" data-d="-1" aria-label="Previous month">‹</button><h2>${title}</h2><button class="btn icon" data-act="calNav" data-d="1" aria-label="Next month">›</button></div>
+    <div class="cal">${g}</div>
+    <div class="legend"><span><i class="d-done"></i>workout done</span><span><i class="d-vr"></i>VR / game day</span><span><i class="d-rest"></i>rest / moved</span><span><i class="d-miss"></i>missed</span><span><i class="d-diet"></i>diet on track</span><span><i class="d-wt"></i>weight logged</span></div>
+    <p class="tiny muted">Tap a day to view or edit it. Missed days aren't a big deal. Today's screen offers to shift the plan or skip ahead.</p>
+    ${weekCard()}${footer()}</main>`;
+}
+
+/* ---------- Settings ---------- */
+function viewSettings() {
+  const p = D.profile, st = D.settings, vs = st.voice, cur = currentCycle();
+  const voices = Voice.list().slice().sort((a, b) => (b.localService - a.localService) || a.name.localeCompare(b.name));
+  const lb = D.meta.lastBackup;
+  const canShare = typeof navigator.canShare === 'function';
+  return `<main class="screen stack">
+    <div class="topbar"><h1>Settings</h1></div>
+    ${banners()}
+    <div class="card stack"><h2>Goal</h2><div class="tiny muted">Phase ${currentPhaseNo(D)} · ${esc(PHASE_MODES[p.mode || 'lose'])} · ${esc(FOCUSES[p.focus || 'balanced'])}</div>
+      <div class="grid2"><label class="field"><span>${D.phases.length ? 'Phase start date' : 'Start date'}</span><input type="date" data-field="profile.startDate" value="${p.startDate || ''}"></label>
+      ${p.mode === 'maintain' ? '<div></div>' : `<label class="field"><span>Goal date</span><input type="date" data-field="profile.goalDate" value="${p.goalDate || ''}"></label>`}</div>
+      <div class="grid3">${numField('Start kg', 'profile.startWeight', p.startWeight, 30, 400, 0.1)}${numField(p.mode === 'maintain' ? 'Target kg' : 'Goal kg', 'profile.goalWeight', p.goalWeight, 30, 400, 0.1)}${numField('Height cm', 'profile.heightCm', p.heightCm, 100, 250)}</div>
+      <p class="tiny muted">Changing the start date moves this phase's plan.</p></div>
+    <div class="card stack"><h2>Workouts</h2>
+      <div class="grid2">${numField('Rest between exercises (s)', 'settings.rest', st.rest, 0, 120)}${numField('Strength rest (s)', 'settings.restDb', st.restDb, 0, 180)}</div>
+      <div class="grid2">${numField('Get-ready countdown (s)', 'settings.getReady', st.getReady, 0, 30)}${numField('Hands-free s per rep', 'settings.secPerRep', st.secPerRep, 1, 6, 0.5)}</div>
+      ${toggle('Hands-free mode (rep moves advance on their own)', 'settings.handsFree', st.handsFree)}
+      ${toggle('Low-impact swaps (no jumping)', 'settings.lowImpact', st.lowImpact)}
+      <div class="grid2">${numField('Default dumbbell kg', 'settings.dumbbellKg', st.dumbbellKg, 0, 100, 0.5)}${numField('Weight step (kg)', 'settings.dumbbellStep', st.dumbbellStep, 0.5, 10, 0.5)}</div>
+      ${toggle('Beeps', 'settings.beeps', st.beeps)}${toggle('Vibration (where supported)', 'settings.vibrate', st.vibrate)}
+      ${toggle('Use my own media files (media/&lt;exercise-id&gt;.mp4 or .jpg)', 'settings.ownMedia', st.ownMedia)}</div>
+    <div class="card stack"><h2>Voice</h2>
+      ${Voice.available() ? `${toggle('Read exercises aloud', 'settings.voice.on', vs.on)}
+      <label class="field"><span>Voice</span><select data-field="settings.voice.voiceURI"><option value="">Automatic (on-device)</option>
+        ${voices.map((v) => `<option value="${esc(v.voiceURI)}" ${v.voiceURI === vs.voiceURI ? 'selected' : ''}>${esc(v.name)} · ${esc(v.lang)}${v.localService ? ' (on-device)' : ' (online, may not work offline)'}</option>`).join('')}</select></label>
+      <label class="field"><span>Speed ${vs.rate.toFixed(1)}×</span><input type="range" min="0.6" max="1.4" step="0.1" data-field="settings.voice.rate" value="${vs.rate}"></label>
+      <label class="field"><span>Volume ${Math.round(vs.volume * 100)}%</span><input type="range" min="0.2" max="1" step="0.1" data-field="settings.voice.volume" value="${vs.volume}"></label>
+      ${toggle('Announce each exercise', 'settings.voice.start', vs.start)}${toggle('"Rest, next up…"', 'settings.voice.rest', vs.rest)}
+      ${toggle('Halfway call on long holds', 'settings.voice.halfway', vs.halfway)}${toggle('Spoken 3-2-1', 'settings.voice.countdown', vs.countdown)}${toggle('"Workout complete"', 'settings.voice.complete', vs.complete)}
+      <button class="btn block" data-act="testVoice">Test voice</button>` : '<p class="small muted">This browser has no speech support. Beeps still work.</p>'}</div>
+    <div class="card stack"><h2>VR / games and activities</h2><p class="tiny muted">MET values used for energy-burned estimates. Higher = more intense. About 3.5 is light, 5 moderate, 7 hard.</p>
+      <div class="grid2">${VR_GAMES.map((g) => numField(g.name + ' MET', 'settings.vrMet.' + g.id, st.vrMet[g.id], 1, 15, 0.5)).join('')}</div>
+      ${allGames(D).filter((g) => !g.builtIn).map((g) => `<div class="spread"><label class="field grow"><span>${esc(g.name)} MET${g.kind ? ' · ' + esc(g.kind) : ''}</span><input type="number" inputmode="decimal" min="1" max="15" step="0.5" data-field="game.${g.id}" value="${g.met}"></label>
+        <button class="btn danger" style="margin-top:22px" data-act="removeGame" data-id="${g.id}">Remove</button></div>`).join('')}
+      <button class="btn block" data-act="addGameOpen">+ Add a game or activity</button></div>
+    <div class="card stack"><h2>Plan</h2>
+      <p class="small">Phase ${currentPhaseNo(D)} · cycle ${cur} (${esc(levelName(cur))}) · ${esc(FOCUSES[p.focus || 'balanced'])}.</p>
+      <button class="btn block" data-act="nextCycle">Start next cycle today</button>
+      <button class="btn primary block" data-act="phaseOpen">Start a new phase…</button>
+      <p class="tiny muted">A new phase sets a fresh goal (keep losing, or maintain), picks the level to start from and the focus. Everything you've logged stays.</p>
+      ${D.phases.length ? `<div class="stack"><div class="small muted">Earlier phases</div>${D.phases.slice().reverse().map((ph) => phaseSummary(ph)).join('')}</div>` : ''}</div>
+    <div class="card stack"><h2>Display</h2><label class="field"><span>Energy units</span><select data-field="settings.energyUnit">
+      ${[['kJ', 'Kilojoules (kJ)'], ['kcal', 'Calories (kcal)']].map(([k, l]) => `<option value="${k}" ${eUnit() === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      <label class="field"><span>Theme</span><select data-field="settings.theme">
+      ${[['auto', 'Match phone'], ['dark', 'Dark'], ['light', 'Light']].map(([k, l]) => `<option value="${k}" ${st.theme === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label></div>
+    <div class="card stack ${backupDue() ? 'warn' : ''}"><h2>Backup and sync</h2>
+      <p class="small">${lb ? `Last backup: ${DateX.pretty(lb.slice(0, 10), { year: 'numeric' })}.` : 'No backup yet.'} Your data only lives on this device, so export now and then.</p>
+      ${backupDue() ? `<p class="small" style="color:var(--orange)">It's been ${backupDue()} days. Worth saving a fresh backup.</p>` : ''}
+      <div class="grid2"><button class="btn primary" data-act="exportFile">Save backup file</button>${canShare ? '<button class="btn" data-act="shareFile">Share / AirDrop</button>' : ''}</div>
+      <label class="btn block">Import a backup…<input type="file" accept="application/json,.json" class="sr" data-act-change="importFile"></label>
+      <p class="tiny muted">To use the app on another device: export here, send the file (AirDrop, iCloud Drive, email), and import it there. Choose <b>Merge</b> to combine both devices' logs; where the same day was edited on both, the newer edit wins.</p></div>
+    <div class="card stack small"><h2>Good to know</h2>
+      <p>No reminders: push notifications need a server, and this app deliberately has none. Nothing you enter ever leaves this device.</p>
+      <p class="muted" id="sys-info">${location.protocol === 'file:' ? 'Opened as a local file.' : 'Opened from a web address.'}</p>
+      ${'serviceWorker' in navigator && location.protocol !== 'file:' ? '<button class="btn block" data-act="checkUpdate">Check for app update</button>' : ''}</div>
+    <div class="card stack"><h2>Danger zone</h2><button class="btn danger block" data-act="eraseAll">Erase all data</button></div>
+    ${footer()}</main>`;
+}
+
+/* ---------- Phases and custom games (sheets) ---------- */
+function trendAt(date) { let v = null; cached('progress', () => progress(D, today())).ma.forEach((p) => { if (p.date <= date) v = p.kg; }); return v; }
+function phaseSummary(ph) {
+  const endW = ph.endDate ? trendAt(ph.endDate) : null;
+  const range = `${DateX.pretty(ph.startDate, { year: 'numeric' })} – ${ph.endDate ? DateX.pretty(ph.endDate, { year: 'numeric' }) : '…'}`;
+  const result = ph.startWeight != null && endW != null ? ` · ${ph.startWeight.toFixed(1)} → ${endW.toFixed(1)} kg` : '';
+  return `<div class="card flat small"><b>Phase ${ph.n}</b> · ${esc(PHASE_MODES[ph.mode])}${ph.goalWeight != null ? ` to ${ph.goalWeight} kg` : ''}<div class="tiny muted">${range}${result}</div></div>`;
+}
+function openPhaseSheet() {
+  const pr = cached('progress', () => progress(D, today())), cur = currentCycle();
+  const w = pr.trend != null ? +pr.trend.toFixed(1) : D.profile.goalWeight;
+  const reached = pr.mode === 'lose' && pr.toGo != null && pr.toGo <= 0.5;
+  V.sheet = { type: 'phase', startDate: today() > D.profile.startDate ? today() : DateX.add(D.profile.startDate, 1),
+    mode: reached ? 'maintain' : 'lose', startWeight: w, goalWeight: reached ? w : D.profile.goalWeight, goalDate: null,
+    level: Math.min(CYCLES.length, cur + 1), focus: 'balanced' };
+  renderSheet();
+}
+function sheetPhase() {
+  const s = V.sheet, maintain = s.mode === 'maintain';
+  const seg = (field, opts) => `<div class="seg">${opts.map(([v, l]) => `<button data-act="phaseSet" data-f="${field}" data-v="${v}" class="${String(s[field]) === String(v) ? 'on' : ''}" aria-pressed="${String(s[field]) === String(v)}">${l}</button>`).join('')}</div>`;
+  return `<div class="spread"><h2>New phase</h2><button class="btn ghost" data-act="closeSheet">Cancel</button></div>
+    <p class="small muted">Phase ${currentPhaseNo(D)} ends the day before this starts. All your logs, workouts and charts stay.</p>
+    <div class="stack">
+      <div><div class="small muted" style="margin-bottom:4px">Goal</div>${seg('mode', [['lose', 'Lose more'], ['maintain', 'Maintain']])}</div>
+      <label class="field"><span>Start date</span><input type="date" data-field="phase.startDate" value="${s.startDate}"></label>
+      <div class="grid2">
+        <label class="field"><span>Start weight (kg)</span><input type="number" inputmode="decimal" step="0.1" data-field="phase.startWeight" value="${s.startWeight != null ? s.startWeight : ''}"></label>
+        <label class="field"><span>${maintain ? 'Target weight (kg)' : 'Goal weight (kg)'}</span><input type="number" inputmode="decimal" step="0.1" data-field="phase.goalWeight" value="${s.goalWeight != null ? s.goalWeight : ''}"></label>
+      </div>
+      ${maintain ? '<p class="tiny muted">Maintenance aims to keep your trend weight within 1 kg of the target. No deadline.</p>'
+        : `<label class="field"><span>Goal date</span><input type="date" data-field="phase.goalDate" value="${s.goalDate || ''}"></label>`}
+      <div><div class="small muted" style="margin-bottom:4px">Start the workouts at</div>${seg('level', CYCLES.map((c) => [c.n, c.level]))}</div>
+      <p class="tiny muted">You're currently on ${esc(levelName(currentCycle()))}. Each level is a 31-day cycle; after Peak it repeats.</p>
+      <div><div class="small muted" style="margin-bottom:4px">Focus</div>${seg('focus', [['balanced', 'Balanced'], ['strength', 'Strength']])}</div>
+      <p class="tiny muted">${s.focus === 'strength' ? 'Two dumbbell days in most blocks, with core finishers. Good for holding muscle once you\'re near goal.' : 'Same shape as now: core-first workouts, a VR / game day and a strength day each block.'}</p>
+      <button class="btn primary block big" data-act="phaseSave">Start phase ${currentPhaseNo(D) + 1}</button>
+    </div>`;
+}
+function openAddGame() { V.sheet = { type: 'addGame', name: '', kind: '', met: 5, back: V.sheet }; renderSheet(); setTimeout(() => { const i = $('[data-field="newgame.name"]'); if (i) i.focus(); }, 50); }
+function sheetAddGame() {
+  const s = V.sheet;
+  return `<h2>Add a game or activity</h2><p class="small muted">It'll appear on every VR / game day with its own timer, and in your logs.</p>
+    <div class="stack">
+      <label class="field"><span>Name</span><input type="text" maxlength="40" placeholder="e.g. Walking, Spin bike, Fitness Boxing" data-field="newgame.name" value="${esc(s.name)}"></label>
+      <label class="field"><span>Type (optional)</span><input type="text" maxlength="40" placeholder="e.g. Switch · cardio" data-field="newgame.kind" value="${esc(s.kind)}"></label>
+      <div><div class="small muted" style="margin-bottom:4px">How hard is a typical session?</div>
+        <div class="seg">${GAME_INTENSITY.map((x) => `<button data-act="gameIntensity" data-v="${x.met}" class="${s.met === x.met ? 'on' : ''}" aria-pressed="${s.met === x.met}">${x.label}</button>`).join('')}</div>
+        <p class="tiny muted">${esc((GAME_INTENSITY.find((x) => x.met === s.met) || {}).hint || 'Custom intensity')} · used for the energy estimate (MET ${s.met}). You can fine-tune it in Settings.</p></div>
+      <div class="grid2"><button class="btn" data-act="addGameCancel">Cancel</button><button class="btn primary" data-act="addGameSave">Add</button></div>
+    </div>`;
+}
+
+/* ---------- Backup ---------- */
+function exportData(mode) {
+  const payload = JSON.stringify({ app: 'fit-tracker', exportedAt: new Date().toISOString(), data: D });
+  const name = `fit-tracker-backup-${today()}.json`;
+  const blob = new Blob([payload], { type: 'application/json' });
+  const mark = () => commit((d) => { d.meta.lastBackup = new Date().toISOString(); });
+  const download = () => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    mark(); toast('Backup saved: ' + name);
+  };
+  let file = null;
+  try { file = new File([blob], name, { type: 'application/json' }); } catch (e) { file = null; }
+  const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  const share = file && navigator.canShare && navigator.canShare({ files: [file] });
+  if (share && (mode === 'share' || (mode === 'auto' && touch))) {
+    navigator.share({ files: [file], title: 'Fit Tracker backup' }).then(() => { mark(); toast('Backup shared'); })
+      .catch((err) => { if (!err || err.name !== 'AbortError') download(); });
+    return;
+  }
+  download();
+}
+function importFile(file) {
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = () => {
+    let parsed;
+    try { parsed = JSON.parse(r.result); } catch (e) { toast('That file isn\'t valid JSON. Nothing was changed.'); return; }
+    try {
+      const res = validateData(parsed);
+      const d = res.data, ws = weightSeries(d);
+      V.sheet = { type: 'import', data: d, dropped: res.dropped,
+        summary: `${ws.length} weigh-ins, ${liveWorkouts(d).length} workouts, ${Object.keys(d.days).length} logged days${ws.length ? `, ${DateX.pretty(ws[0].date, { year: 'numeric' })} to ${DateX.pretty(ws[ws.length - 1].date, { year: 'numeric' })}` : ''}.` };
+      renderSheet();
+    } catch (e) { toast(e.message + ' Nothing was changed.'); }
+  };
+  r.onerror = () => toast('Couldn\'t read that file.');
+  r.readAsText(file);
+}
+function sheetImport() {
+  const s = V.sheet, fresh = !D.meta.setupDone;
+  return `<h2>Import backup</h2><p>${esc(s.summary)}</p>${s.dropped ? `<p class="small" style="color:var(--orange)">${s.dropped} damaged entr${s.dropped > 1 ? 'ies' : 'y'} will be skipped.</p>` : ''}
+    ${fresh ? '' : '<p class="small muted"><b>Merge</b> keeps everything from both. <b>Replace</b> makes this device an exact copy of the backup. A copy of the current data is kept either way.</p>'}
+    <div class="stack">${fresh ? '' : '<button class="btn primary block" data-act="importMerge">Merge (recommended)</button>'}
+    <button class="btn ${fresh ? 'primary' : 'danger'} block" data-act="importReplace">${fresh ? 'Restore' : 'Replace'}</button>
+    <button class="btn block" data-act="closeSheet">Cancel</button></div>`;
+}
+function keepCopy() { try { localStorage.setItem(APP.storageKey + '.before-import', JSON.stringify(D)); } catch (e) { /* ignore */ } }
+
+/* ---------- Actions ---------- */
+const ACT = {
+  tab: (el) => { V.tab = el.dataset.tab; V.open = null; render(); window.scrollTo(0, 0); },
+  setupDone: () => {
+    const v = (id) => $('#' + id).value, n = (id) => (v(id) === '' ? null : parseFloat(v(id)));
+    const start = v('su-start'), sw = n('su-sw'), gw = n('su-gw'), gd = v('su-gd'), hc = n('su-h');
+    if (!DateX.valid(start)) { toast('Pick a start date.'); return; }
+    if (sw != null && (sw < 30 || sw > 400)) { toast('Start weight should be in kg.'); return; }
+    if (gw != null && (gw < 30 || gw > 400)) { toast('Goal weight should be in kg.'); return; }
+    if (gd && !DateX.valid(gd)) { toast('Pick a valid goal date.'); return; }
+    commit((d) => {
+      d.profile = { startDate: start, startWeight: sw, goalWeight: gw, goalDate: gd || null, heightCm: hc };
+      d.meta.setupDone = true; d.meta.createdAt = new Date().toISOString();
+      if (sw != null && !(d.days[start] && d.days[start].weight != null)) setDay(start, { weight: sw });
+    });
+  },
+  openSession: (el) => { V.open = { key: el.dataset.key }; render(); window.scrollTo(0, 0); },
+  closeSession: () => { V.open = null; render(); window.scrollTo(0, 0); },
+  startWorkout: (el) => startWorkout(el.dataset.key),
+  skipToday: () => confirmBox('Move today to tomorrow?', 'Today becomes a rest day and the rest of the plan shifts back one day.', 'Move it', () => commit((d) => skipToday(d, today()))),
+  shiftMissed: (el) => { commit((d) => shiftPlan(d, el.dataset.date, today())); toast('Plan shifted. Today picks up where you left off.'); },
+  skipMissed: (el) => commit((d) => { const m = findMissed(d, today()); for (let x = el.dataset.date; x < today(); x = DateX.add(x, 1)) d.schedule.dismissed.push(x); if (m) { /* nothing else */ } }),
+  ackMilestone: (el) => commit((d) => { d.meta.milestone = +el.dataset.m; }),
+  exportData: () => exportData('auto'), exportFile: () => exportData('download'), shareFile: () => exportData('share'),
+  setEnergy: (el) => { const date = el.dataset.date, v = +el.dataset.v, cur = (D.days[date] || {}).energy; commit((d) => setDay(date, { energy: cur === v ? null : v })); },
+  planCycle: (el) => { V.planCycle = +el.dataset.c; render(); },
+  exInfo: (el) => { V.sheet = { type: 'ex', steps: openSessionObj().steps, i: +el.dataset.i, tab: 'video' }; renderSheet(); },
+  exTab: (el) => { V.sheet.tab = el.dataset.tab; renderSheet(); },
+  exNav: (el) => { V.sheet.i = clamp(V.sheet.i + +el.dataset.d, 0, V.sheet.steps.length - 1); renderSheet(); },
+  closeSheet: () => closeSheet(),
+  closeSheetRender: () => { V.sheet = null; render(); },
+  sheetBg: (el, e) => { if (e.target === el) { V.sheet = null; render(); } },
+  confirmYes: () => { const fn = V.sheet.fn; V.sheet = null; renderSheet(); fn(); },
+  editSession: () => {
+    const k = parseKey(V.open.key), base = phaseSession(D, k.phase, k.cycle, k.day), ed = D.planEdits[V.open.key];
+    V.sheet = { type: 'edit', key: V.open.key, g: base.g || 0.5, steps: JSON.parse(JSON.stringify(ed && ed.steps ? ed.steps : base.steps)) };
+    renderSheet();
+  },
+  editDose: (el) => { const s = V.sheet.steps[+el.dataset.i], d = +el.dataset.d; if (s.sec != null) s.sec = Math.max(5, s.sec + 5 * d); else s.reps = Math.max(2, s.reps + 2 * d); renderSheet(); },
+  editMove: (el) => { const a = V.sheet.steps, i = +el.dataset.i, j = i + +el.dataset.d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; renderSheet(); },
+  editRemove: (el) => { if (V.sheet.steps.length <= 1) { toast('Keep at least one exercise.'); return; } V.sheet.steps.splice(+el.dataset.i, 1); renderSheet(); },
+  editSwap: (el) => { V.sheet = { type: 'picker', mode: 'swap', i: +el.dataset.i, back: V.sheet }; renderSheet(); },
+  editAdd: () => { V.sheet = { type: 'picker', mode: 'add', back: V.sheet }; renderSheet(); },
+  pickerBack: () => { V.sheet = V.sheet.back; renderSheet(); },
+  pickerArea: (el) => { V.sheet.area = el.dataset.a; renderSheet(); },
+  pickerPick: (el) => {
+    const s = V.sheet, back = s.back, k = parseKey(back.key);
+    const nd = dose(el.dataset.id, k.cycle, back.g);
+    if (s.mode === 'swap') { const old = back.steps[s.i]; ['group', 'round', 'rounds'].forEach((f) => { if (old[f] != null) nd[f] = old[f]; }); back.steps[s.i] = nd; } else back.steps.push(nd);
+    V.sheet = back; renderSheet();
+  },
+  editSave: () => { const s = V.sheet; V.sheet = null; commit((d) => { d.planEdits[s.key] = { steps: s.steps, t: Date.now() }; }); toast('Day saved'); },
+  editReset: () => { const s = V.sheet; V.sheet = null; commit((d) => { delete d.planEdits[s.key]; }); toast('Back to the original plan'); },
+  workoutSettings: () => { V.sheet = { type: 'wsettings' }; renderSheet(); },
+  openDay: (el) => { V.sheet = { type: 'day', date: el.dataset.date }; renderSheet(); },
+  dayDone: (el) => {
+    const date = el.dataset.date, s = sessionOn(date, D).session;
+    commit((d) => d.workouts.push({ id: uid(), t: Date.now(), date, planKey: s.key, type: s.type, title: s.title, manual: true }));
+  },
+  delWorkout: (el) => commit((d) => { const w = d.workouts.find((x) => x.id === el.dataset.id); if (w) { w.deleted = true; w.t = Date.now(); } }),
+  calNav: (el) => {
+    const m = V.calMonth || today().slice(0, 7), d = +el.dataset.d;
+    const base = m + '-15'; V.calMonth = DateX.add(base, d * 30).slice(0, 7); render();
+  },
+  chartRange: (el) => { V.chartRange = el.dataset.r; render(); },
+  toggleWeights: () => { V.showAllWeights = !V.showAllWeights; render(); },
+  addWeight: () => {
+    const date = $('#w-date').value, kg = parseFloat($('#w-kg').value), waist = parseFloat($('#w-waist').value);
+    if (!DateX.valid(date)) { toast('Pick a date.'); return; }
+    const patch = {};
+    if (!isNaN(kg)) { if (kg < 30 || kg > 400) { toast('That weight looks off. Use kg.'); return; } patch.weight = kg; }
+    if (!isNaN(waist)) { if (waist < 40 || waist > 250) { toast('Waist should be in cm.'); return; } patch.waist = waist; }
+    if (!Object.keys(patch).length) { toast('Enter a weight or waist measurement.'); return; }
+    commit((d) => setDay(date, patch)); toast('Saved');
+  },
+  // VR
+  vrToggle: (el) => commit((d) => { const st = vrState(V.open.key), g = st.games[el.dataset.g]; if (g.since) { g.acc += Date.now() - g.since; g.since = null; } else g.since = Date.now(); }),
+  vrReset: (el) => confirmBox('Reset this timer?', 'The time on this game\'s stopwatch will be cleared.', 'Reset', () => commit((d) => { const st = vrState(V.open.key); st.games[el.dataset.g] = { acc: 0, since: null }; })),
+  vrDone: () => {
+    const st = D.vrActive && D.vrActive.key === V.open.key ? D.vrActive : null, min = {};
+    allGames(D).forEach((g) => { min[g.id] = st && st.games[g.id] ? Math.round(vrMs(st.games[g.id]) / 60000) : 0; });
+    V.sheet = { type: 'vrDone', min, effort: null }; renderSheet();
+  },
+  vrEffort: (el) => { V.sheet.effort = +el.dataset.v; renderSheet(); },
+  vrSave: () => {
+    const s = V.sheet, total = allGames(D).reduce((a, g) => a + (s.min[g.id] || 0), 0);
+    if (!total) { toast('Enter the minutes you played.'); return; }
+    const key = V.open.key, kcal = vrKcal(s.min, D, currentKg()), vr = {};
+    allGames(D).forEach((g) => { if (s.min[g.id]) vr[g.id] = s.min[g.id]; });
+    V.sheet = null;
+    commit((d) => {
+      d.workouts.push({ id: uid(), t: Date.now(), date: today(), planKey: key, type: 'vr', title: 'VR / game session', vr, kcal, effort: s.effort, durationSec: total * 60 });
+      d.vrActive = null;
+    });
+    toast(`Logged ${total} min of VR / games, about ${fmtE(kcal)}`);
+  },
+  vrFallback: () => { V.open = { key: V.open.key, fallback: true }; render(); window.scrollTo(0, 0); },
+  // Player
+  pPause: () => { P.paused = !P.paused; P.autoPaused = false; P.last = performance.now(); Voice.stop(); renderPlayer(); },
+  pSkip: () => { Voice.stop(); P.paused = false; if (P.phase === 'work') advance(false); else beginWork(P.phase === 'ready' ? 0 : P.i + 1); },
+  pPrev: () => { Voice.stop(); P.paused = false; beginWork(Math.max(0, P.phase === 'rest' ? P.i : P.i - 1)); },
+  pDone: () => advance(true),
+  pAdd10: () => { if (P.left != null) P.left += 10; P.dur += 10; updatePlayerTime(); },
+  pFinish: () => { P.confirmEnd = true; Voice.stop(); renderPlayer(); },
+  pEndNo: () => { P.confirmEnd = false; P.last = performance.now(); renderPlayer(); },
+  pEndYes: () => { P.confirmEnd = false; finishPlayer(); },
+  pEffort: (el) => { P.effort = +el.dataset.v; renderPlayer(); },
+  pLoad: (el) => { const id = el.dataset.id; P.loads[id] = Math.max(0, +(P.loads[id] + D.settings.dumbbellStep * +el.dataset.d).toFixed(2)); renderPlayer(); },
+  pDiscard: () => closePlayer(),
+  pSave: () => {
+    const s = P.s, now = Date.now();
+    commit((d) => {
+      d.workouts.push({ id: uid(), t: now, date: today(), planKey: s.key, type: s.type === 'db' ? 'db' : 'workout', title: s.title + (V.open && V.open.fallback ? ' (instead of VR / game)' : ''),
+        durationSec: Math.round(P.activeMs / 1000), kcal: P.kcal, effort: P.effort, completed: P.done.size, total: s.steps.length, loads: Object.keys(P.loads).length ? P.loads : undefined });
+      Object.keys(P.loads).forEach((id) => {
+        const reps = Math.max(0, ...s.steps.filter((x, i) => x.id === id && P.done.has(i)).map((x) => x.reps || 0));
+        d.loads[id] = { kg: P.loads[id], reps, hitTop: reps >= strengthReps(s.focus).hi, t: now };
+      });
+    }, { render: false });
+    toast('Workout saved');
+    closePlayer();
+  },
+  // Phases
+  phaseOpen: () => openPhaseSheet(),
+  phaseSnooze: () => commit((d) => { d.meta.phasePromptSnooze = DateX.add(today(), 14); }),
+  phaseSet: (el) => { const f = el.dataset.f; V.sheet[f] = f === 'level' ? +el.dataset.v : el.dataset.v; renderSheet(); },
+  phaseSave: () => {
+    const s = V.sheet;
+    if (!DateX.valid(s.startDate) || s.startDate <= D.profile.startDate) { toast('Pick a start date after the current phase began.'); return; }
+    if (s.startWeight != null && (s.startWeight < 30 || s.startWeight > 400)) { toast('Start weight should be in kg.'); return; }
+    if (s.goalWeight == null || s.goalWeight < 30 || s.goalWeight > 400) { toast(s.mode === 'maintain' ? 'Enter a target weight.' : 'Enter a goal weight.'); return; }
+    if (s.mode === 'lose') {
+      if (!DateX.valid(s.goalDate) || s.goalDate <= s.startDate) { toast('Pick a goal date after the start date.'); return; }
+      if (s.startWeight != null && s.goalWeight >= s.startWeight) { toast('For "Lose more", the goal should be below your start weight.'); return; }
+    }
+    V.sheet = null;
+    try { commit((d) => beginPhase(d, s)); } catch (e) { toast(e.message); return; }
+    V.planCycle = null; V.open = null;
+    toast(`Phase ${currentPhaseNo(D)} starts ${dayLabel(s.startDate).toLowerCase() === 'today' ? 'today' : DateX.pretty(s.startDate)}`);
+  },
+  // Custom games
+  addGameOpen: () => openAddGame(),
+  addGameCancel: () => { V.sheet = V.sheet.back || null; renderSheet(); },
+  gameIntensity: (el) => { V.sheet.met = +el.dataset.v; renderSheet(); },
+  addGameSave: () => {
+    const s = V.sheet, name = (s.name || '').trim();
+    if (!name) { toast('Give it a name.'); return; }
+    if (allGames(D).some((g) => g.name.toLowerCase() === name.toLowerCase())) { toast('That one is already on the list.'); return; }
+    V.sheet = s.back || null;
+    commit((d) => addCustomGame(d, name, s.kind, s.met));
+    toast(`${name} added`);
+  },
+  removeGame: (el) => {
+    const g = allGames(D).find((x) => x.id === el.dataset.id);
+    confirmBox(`Remove ${g ? g.name : 'this activity'}?`, 'It disappears from the game-day list. Sessions you already logged keep it.', 'Remove',
+      () => commit((d) => { const x = d.customGames.find((y) => y.id === el.dataset.id); if (x) { x.deleted = true; x.t = Date.now(); } }), true);
+  },
+  // Settings
+  testVoice: () => { Sound.unlock(); Voice.say(`${spokenName(LIBRARY.plank)}, ${spokenTarget({ sec: 60 })}`); Sound.beep(880, 200); },
+  nextCycle: () => confirmBox('Start the next cycle today?', 'The plan jumps to Day 1 of the next cycle from today. Your logs stay as they are.', 'Start it', () => { commit((d) => startNextCycle(d, today())); V.planCycle = null; toast('New cycle started'); }),
+  eraseAll: () => confirmBox('Erase all data?', 'This deletes every weigh-in, workout and setting on this device. Export a backup first if you might want it.', 'Continue', () =>
+    confirmBox('Really erase everything?', 'This can\'t be undone.', 'Erase', () => {
+      keepCopy();
+      try { localStorage.removeItem(APP.storageKey); } catch (e) { /* ignore */ }
+      D = defaultData(); V.open = null; V.tab = 'today'; Store.save(); render();
+    }, true), true),
+  checkUpdate: () => {
+    navigator.serviceWorker.getRegistration().then((r) => (r ? r.update() : null))
+      .then(() => toast('Checked. If there\'s an update, it loads next time you open the app.')).catch(() => toast('Couldn\'t check (offline?).'));
+  },
+  importMerge: () => { const inc = V.sheet.data; keepCopy(); V.sheet = null; D = mergeData(D, inc); Store.save(); render(); toast('Merged'); },
+  importReplace: () => { const inc = V.sheet.data; keepCopy(); V.sheet = null; D = inc; if (D.profile.startDate) D.meta.setupDone = true; Store.save(); render(); toast('Backup restored'); },
+};
+
+/* ---------- Events ---------- */
+function setPath(obj, parts, v) { let o = obj; for (let i = 0; i < parts.length - 1; i++) o = o[parts[i]]; o[parts[parts.length - 1]] = v; }
+function fieldValue(el) {
+  if (el.type === 'checkbox') return el.checked;
+  if (el.type === 'number' || el.type === 'range') { if (el.value === '') return null; const v = parseFloat(el.value); return isFinite(v) ? v : null; }
+  return el.value;
+}
+function onField(el, live) {
+  const path = el.dataset.field, parts = path.split('.'), root = parts.shift();
+  let v = fieldValue(el);
+  if (root === 'picker') { if (!live) return; V.sheet.q = v; renderSheet(); const i = $('[data-field="picker.q"]'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } return; }
+  if (root === 'phase' || root === 'newgame') { V.sheet[parts[0]] = v; return; } // kept in the sheet until Save
+  if (root === 'game') {
+    if (live || v == null) return;
+    commit((d) => { const g = d.customGames.find((x) => x.id === parts[0]); if (g) { g.met = clamp(v, 1, 15); g.t = Date.now(); } }, { render: false });
+    return;
+  }
+  if (root === 'vr') { V.sheet.min[parts[0]] = v == null ? 0 : clamp(Math.round(v), 0, 300); const k = $('#vr-kcal'); if (k) k.textContent = fmtE(vrKcal(V.sheet.min, D, currentKg())); return; }
+  if (live && el.type !== 'range') return;
+  if (root === 'day') {
+    const date = el.dataset.date, k = parts[0];
+    if (k === 'weight' && v != null && (v < 30 || v > 400)) { toast('That weight looks off. Use kg.'); return; }
+    if (k === 'waist' && v != null && (v < 40 || v > 250)) { toast('Waist should be in cm.'); return; }
+    commit((d) => setDay(date, { [k]: v }), { render: false });
+    el.style.borderColor = 'var(--green)'; setTimeout(() => { el.style.borderColor = ''; }, 900);
+    softRender();
+    return;
+  }
+  if (root === 'settings' || root === 'profile') {
+    if (el.type === 'date' && v && !DateX.valid(v)) { toast('Pick a valid date.'); return; }
+    if (el.type === 'date' && !v) v = null;
+    if (path === 'profile.startDate' && !v) { toast('The plan needs a start date.'); render(); return; }
+    if (path === 'profile.startDate' && D.phases.length && v <= D.phases[D.phases.length - 1].startDate) { toast('This phase has to start after the previous one.'); render(); return; }
+    if (typeof v === 'number' && el.min !== '') v = clamp(v, +el.min, el.max !== '' ? +el.max : Infinity);
+    if (v === null && root === 'settings') return;
+    setPath(D[root], parts, v);
+    commit(null, { render: false });
+    if (path === 'settings.theme') applyTheme();
+    if (el.type === 'range') { const lab = el.closest('label').querySelector('span'); if (lab) lab.textContent = lab.textContent.replace(/[\d.]+(×|%)/, path.endsWith('rate') ? v.toFixed(1) + '×' : Math.round(v * 100) + '%'); }
+    if (el.type !== 'range') softRender();
+  }
+}
+function onVisibility() {
+  if (document.hidden) {
+    if (P && P.phase !== 'done' && !P.paused) { P.paused = true; P.autoPaused = true; Voice.stop(); renderPlayer(); }
+  } else {
+    if (P && P.phase !== 'done') Wake.on();
+    if (!P) render();
+  }
+}
+
+/* ---------- Boot ---------- */
+function boot() {
+  $('#app').innerHTML = '<div id="main"></div><div id="sheet"></div><div id="player"></div><div id="toast" aria-live="polite"></div>';
+  D = Store.load();
+  document.addEventListener('click', (e) => { const el = e.target.closest('[data-act]'); if (el && ACT[el.dataset.act] && !el.disabled) ACT[el.dataset.act](el, e); });
+  document.addEventListener('change', (e) => {
+    const el = e.target;
+    if (el.dataset.actChange === 'importFile') { importFile(el.files[0]); el.value = ''; return; }
+    if (el.dataset.field) onField(el, false);
+  });
+  document.addEventListener('input', (e) => { if (e.target.dataset.field) onField(e.target, true); });
+  document.addEventListener('visibilitychange', onVisibility);
+  if (Voice.available()) { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => { if (V.tab === 'settings' && !V.open && !P) softRender(); }; }
+  setInterval(vrTick, 500);
+  let day = today();
+  setInterval(() => { if (today() !== day) { day = today(); if (!P) render(); } }, 60000);
+  render();
+  if (/^https?:$/.test(location.protocol) && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => { /* offline cache unavailable */ });
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => { /* not granted */ });
+}
+boot();
+</script>
+</body>
+</html>
